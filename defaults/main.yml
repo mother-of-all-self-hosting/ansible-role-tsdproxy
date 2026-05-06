@@ -16,14 +16,13 @@ tsdproxy_identifier: tsdproxy
 # renovate: datasource=docker depName=almeidapaulopt/tsdproxy
 tsdproxy_version: 1.4.7
 
-tsdproxy_uid: ''
-tsdproxy_gid: ''
+tsdproxy_uid: ""
+tsdproxy_gid: ""
 
 tsdproxy_base_path: "/{{ tsdproxy_identifier }}"
 tsdproxy_config_path: "{{ tsdproxy_base_path }}/config"
 tsdproxy_data_path: "{{ tsdproxy_base_path }}/data"
 tsdproxy_env_path: "{{ tsdproxy_config_path }}/env"
-
 
 tsdproxy_systemd_required_services_list: "{{ tsdproxy_systemd_required_services_list_default + tsdproxy_systemd_required_services_list_auto + tsdproxy_systemd_required_services_list_custom }}"
 tsdproxy_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
@@ -41,8 +40,7 @@ tsdproxy_container_image: "{{ tsdproxy_container_image_registry_prefix }}almeida
 tsdproxy_container_image_registry_prefix: docker.io/
 tsdproxy_container_image_tag: "{{ tsdproxy_version }}"
 
-tsdproxy_container_network: '{{ tsdproxy_identifier }}'
-
+tsdproxy_container_network: "{{ tsdproxy_identifier }}"
 
 # A list of additional container networks that the container would be connected to.
 # The role does not create these networks, so make sure they already exist.
@@ -51,17 +49,18 @@ tsdproxy_container_additional_networks: "{{ tsdproxy_container_additional_networ
 tsdproxy_container_additional_networks_auto: []
 tsdproxy_container_additional_networks_custom: []
 
-tsdproxy_container_http_host_bind_port: ''
-
+tsdproxy_container_http_host_bind_port: ""
 
 tsdproxy_docker_endpoint: unix:///var/run/docker.sock
 tsdproxy_docker_endpoint_is_unix_socket: true
 
 tsdproxy_config_files: {}
 
-tsdproxy_tailscale_authkey: ''
-tsdproxy_tailscale_authkeyfile: '' # use this to load authkey from file. If this is defined, Authkey is ignored
-tsdproxy_controlurl: 'https://controlplane.tailscale.com' # use this to override the default control URL
+tsdproxy_tailscale_authkey: ""
+tsdproxy_tailscale_authkeyfile: "" # use this to load authkey from file. If this is defined, Authkey is ignored
+
+tsdproxy_controlurl: "https://controlplane.tailscale.com" # use this to override the default control URL
+
 tsdproxy_loglevel: info # set logging level info, error or trace
 tsdproxy_proxyaccesslog: true # set to true to enable container access log
 
@@ -71,10 +70,10 @@ tsdproxy_proxyaccesslog: true # set to true to enable container access log
 #          authkey: "{{ tsdproxy_tailscale_authkey }}" # define authkey here
 #          authkeyfile: "{{ tsdproxy_tailscale_authkeyfile }}" # use this to load authkey from file. If this is defined, Authkey is ignored
 #          controlurl: "{{ tsdproxy_controlurl }}" # use this to override the default control URL
-tsdproxy_additional_providers: ''
+tsdproxy_additional_providers: ""
 
 # configuration added to the tsdproxy.yaml file
-tsdproxy_extra_config: ''
+tsdproxy_extra_config: ""
 
 # Default TSDProxy configuration template which covers the generic use case.
 # You can customize it by controlling the various variables inside it.
@@ -102,9 +101,9 @@ tsdproxy_configuration: "{{ tsdproxy_configuration_yaml | from_yaml | combine(ts
 # tsdproxy_container_labels_additional_labels: |
 #   my.label=1
 #   another.label="here"
-tsdproxy_container_labels_additional_labels: ''
+tsdproxy_container_labels_additional_labels: ""
 
-tsdproxy_environment_variables_extension: ''
+tsdproxy_environment_variables_extension: ""
 
 # tsdproxy_restart_necessary controls whether the TSDProxy systemd
 # service will be restarted (when true) or merely started (when false) by the
