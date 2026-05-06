@@ -30,12 +30,12 @@
   register: tsdproxy_support_files_result
 
 - name: Ensure TSDProxy configuration file installed
-  ansible.builtin.template:
-    src: "{{ role_path }}/templates/tsdproxy.yaml.j2"
-    dest: "{{ tsdproxy_config_path }}//tsdproxy.yaml"
+  ansible.builtin.copy:
+    content: "{{ tsdproxy_configuration | to_nice_yaml(indent=2, width=999999) }}"
+    dest: "{{ tsdproxy_data_path }}/tsdproxy.yaml"
+    mode: "0660"
     owner: "{{ tsdproxy_uid }}"
     group: "{{ tsdproxy_gid }}"
-    mode: "0660"
   register: tsdproxy_config_file_result
 
 - name: Ensure TSDProxy container image is pulled via community.docker.docker_image_pull
