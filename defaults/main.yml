@@ -76,6 +76,28 @@ tsdproxy_additional_providers: ''
 # configuration added to the tsdproxy.yaml file
 tsdproxy_extra_config: ''
 
+# Default TSDProxy configuration template which covers the generic use case.
+# You can customize it by controlling the various variables inside it.
+#
+# For a more advanced customization, you can extend the default (see `tsdproxy_configuration_yaml`)
+# or completely replace this variable with your own template.
+tsdproxy_configuration_yaml: "{{ lookup('template', 'templates/tsdproxy.yaml.j2') }}"
+
+tsdproxy_configuration_extension_yaml: |
+  # Your custom YAML configuration for TSDProxy goes here.
+  # This configuration extends the default starting configuration (`tsdproxy_configuration_yaml`).
+  #
+  # You can override individual variables from the default configuration, or introduce new ones.
+  #
+  # If you need something more special, you can take full control by
+  # completely redefining `tsdproxy_configuration_yaml`.
+
+tsdproxy_configuration_extension: "{{ tsdproxy_configuration_extension_yaml | from_yaml if tsdproxy_configuration_extension_yaml | from_yaml is mapping else {} }}"
+
+# Holds the final TSDProxy configuration (a combination of the default and its extension).
+# You most likely don't need to touch this variable. Instead, see `tsdproxy_configuration_yaml`.
+tsdproxy_configuration: "{{ tsdproxy_configuration_yaml | from_yaml | combine(tsdproxy_configuration_extension, recursive=True) }}"
+
 # Example:
 # tsdproxy_container_labels_additional_labels: |
 #   my.label=1
