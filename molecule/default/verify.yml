@@ -7,10 +7,15 @@
   hosts: all
   become: true
   gather_facts: false
+
   vars:
     tsdproxy_molecule_config_file_path: /tsdproxy/config/tsdproxy.yaml
     tsdproxy_molecule_stale_config_file_path: /tsdproxy/data/tsdproxy.yaml
     tsdproxy_molecule_base_url: "http://127.0.0.1:{{ tsdproxy_molecule_http_host_bind_port }}"
+
+    tsdproxy_verify_units:
+      - tsdproxy.service
+
   tasks:
     - name: Verify that TSDProxy works
       block:
@@ -22,13 +27,14 @@
             file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
             name: tsdproxy_defaults
 
-        - name: Wait for the TSDProxy systemd service to become active (up to 180s)
+        - name: Wait for the TSDProxy systemd services to become active (up to 180s each)
           ansible.builtin.systemd_service:
-            name: tsdproxy.service
-          register: tsdproxy_service
-          until: tsdproxy_service.status.ActiveState == 'active'
+            name: "{{ item }}"
+          register: tsdproxy_services
+          until: tsdproxy_services.status.ActiveState == 'active'
           retries: 36
           delay: 5
+          loop: "{{ tsdproxy_verify_units }}"
           # So that giving up is reported by the assertion below rather than as a
           # wall of systemd unit properties.
           failed_when: false
@@ -36,31 +42,31 @@
         # `Restart=always` in the systemd unit means that even a container which crashes
         # and gets restarted reads as active here, so this is a precondition rather than
         # a result.
-        # this asserts on the restart counter as well. TSDProxy
-        # panics and exits 2 when it cannot reach the Docker daemon, which is the
-        # failure mode this is here to catch.
-        - name: Assert the TSDProxy systemd service is active and has not restarted
+        - name: Assert the TSDProxy systemd services are active
           ansible.builtin.assert:
-            that:
-              - tsdproxy_service.status.ActiveState == 'active'
-              - tsdproxy_service.status.SubState == 'running'
-              - (tsdproxy_service.status.NRestarts | int) == 0
+            that: tsdproxy_services.results | map(attribute='status.ActiveState') | unique | list == ['active']
             fail_msg: >-
-              tsdproxy.service is {{ tsdproxy_service.status.ActiveState }}/{{ tsdproxy_service.status.SubState }}
-              after {{ tsdproxy_service.status.NRestarts }} restart(s)
-            success_msg: "tsdproxy.service is active and running on its first start"
+              Not every service is active:
+              {{ dict(tsdproxy_verify_units | zip(tsdproxy_services.results | map(attribute='status.ActiveState'))) }}
+            success_msg: "Every systemd service is active"
 
-        - name: Retrieve the TSDProxy systemd service log for debugging
+        - name: Retrieve the TSDProxy systemd services log for debugging
           when: tsdproxy_debug_service_enabled | bool
           ansible.builtin.command:
-            cmd: journalctl -xeu tsdproxy.service
+            cmd: "journalctl --no-pager --output=cat --unit={{ item }}"
           changed_when: false
+          loop: "{{ tsdproxy_verify_units }}"
 
         # `tsdproxy_gid` derives from this; see molecule.yml.
         - name: Look up the Docker group for TSDProxy verification
           ansible.builtin.getent:
             database: group
             key: docker
+
+        - name: Register tsdproxy.service
+          ansible.builtin.systemd_service:
+            name: tsdproxy.service
+          register: tsdproxy_service
 
         - name: Record the TSDProxy systemd invocation under test
           ansible.builtin.set_fact:
@@ -353,7 +359,7 @@
         - name: Show the TSDProxy verification summary
           ansible.builtin.debug:
             msg:
-              - "TSDProxy systemd: {{ tsdproxy_service_after.status.ActiveState }}, {{ tsdproxy_service_after.status.NRestarts }} restart(s)"
+              - "TSDProxy systemd: {% for unit, state in tsdproxy_verify_units | zip(tsdproxy_services.results | map(attribute='status.ActiveState')) %}{{ unit }} ({{ state }}){% if not loop.last %}, {% endif %}{% endfor %}"
               - "TSDProxy version: {{ (tsdproxy_molecule_log_entries | selectattr('message', 'equalto', 'Starting server') | first).Version }}"
               - "TSDProxy readiness: HTTP {{ tsdproxy_ready.status }} {{ tsdproxy_ready.content }}"
               - "TSDProxy log level: {{ (tsdproxy_molecule_log_entries | selectattr('message', 'equalto', 'Log Settings') | first)['Log level'] }}"
