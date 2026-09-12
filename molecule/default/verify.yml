@@ -12,12 +12,6 @@
     tsdproxy_molecule_stale_config_file_path: /tsdproxy/data/tsdproxy.yaml
     tsdproxy_molecule_base_url: "http://127.0.0.1:{{ tsdproxy_molecule_http_host_bind_port }}"
   tasks:
-    # `tsdproxy_gid` derives from this; see molecule.yml.
-    - name: Look up the Docker group for TSDProxy verification
-      ansible.builtin.getent:
-        database: group
-        key: docker
-
     # Role defaults are not in scope here, but the version Renovate bumps lives
     # in them and is what the running TSDProxy is checked against below.
     - name: Load the TSDProxy role defaults
@@ -58,6 +52,12 @@
       ansible.builtin.command:
         cmd: journalctl -xeu tsdproxy.service
       changed_when: false
+
+    # `tsdproxy_gid` derives from this; see molecule.yml.
+    - name: Look up the Docker group for TSDProxy verification
+      ansible.builtin.getent:
+        database: group
+        key: docker
 
     - name: Record the TSDProxy systemd invocation under test
       ansible.builtin.set_fact:
