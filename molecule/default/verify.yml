@@ -12,8 +12,9 @@
     tsdproxy_molecule_stale_config_file_path: /tsdproxy/data/tsdproxy.yaml
     tsdproxy_molecule_base_url: "http://127.0.0.1:{{ tsdproxy_molecule_http_host_bind_port }}"
   tasks:
-    # Role defaults are not in scope here, but the version Renovate bumps lives
-    # in them and is what the running TSDProxy is checked against below.
+    # The role is not included in this playbook, so its defaults are not in
+    # scope. Reading defaults/main.yml directly ties the version assertion
+    # below.
     - name: Load the TSDProxy role defaults
       ansible.builtin.include_vars:
         file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
