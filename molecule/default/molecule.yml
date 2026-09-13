@@ -29,6 +29,7 @@ provisioner:
       all:
         # Helper variables
         tsdproxy_debug_service_enabled: false
+        tsdproxy_restarts_check_enabled: true
 
         # Every value below is deliberately different from both the role's own
         # default AND from the configuration TSDProxy generates for itself when
