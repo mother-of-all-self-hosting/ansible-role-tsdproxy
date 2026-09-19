@@ -28,7 +28,7 @@ tsdproxy_uid: '' # the uid the container runs as
 tsdproxy_gid: '' # the gid the container runs as - see "Access to the container socket" below
 
 tsdproxy_tailscale_authkey: '' # OR
-tsdproxy_tailscale_authkeyfile: '' # use this to load authkey from file. If this is defined, Authkey is ignored
+tsdproxy_config_tailscale_providers_default_authkeyfile: '' # use this to load authkey from file. If this is defined, Authkey is ignored
 ```
 
 ### Access to the container socket
@@ -43,7 +43,7 @@ If you would rather not hand a container the real socket, put something like [an
 
 The role renders `tsdproxy_tailscale_authkey` into `{{ tsdproxy_config_path }}/tsdproxy.yaml` in clear text, owned by `tsdproxy_uid:tsdproxy_gid` with mode `0660`. It is not written to the systemd unit and not logged.
 
-`tsdproxy_tailscale_authkeyfile` is the alternative: TSDProxy reads the key out of a file at startup, so the key itself never has to appear in your playbook's variables or in the rendered configuration. The file has to be readable from inside the container - use `tsdproxy_container_additional_volumes` to put it there.
+`tsdproxy_config_tailscale_providers_default_authkeyfile` is the alternative: TSDProxy reads the key out of a file at startup, so the key itself never has to appear in your playbook's variables or in the rendered configuration. The file has to be readable from inside the container - use `tsdproxy_container_additional_volumes` to put it there.
 
 ### Add a new Service
 

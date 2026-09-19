@@ -35,7 +35,7 @@
           storage-driver: fuse-overlayfs
 
     # A stand-in for the Tailscale pre-authentication key that a real
-    # deployment would point `tsdproxy_tailscale_authkeyfile` at. TSDProxy reads
+    # deployment would point `tsdproxy_config_tailscale_providers_default_authkeyfile` at. TSDProxy reads
     # the file during configuration loading and exits if it cannot, which is
     # what makes it useful here - see molecule.yml.
     #

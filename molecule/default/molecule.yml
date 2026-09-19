@@ -64,7 +64,7 @@ provisioner:
         # TSDProxy try to register a Tailscale node with it. See molecule/README.md.
         tsdproxy_molecule_authkey_host_path: /var/lib/tsdproxy-molecule/authkey
         tsdproxy_molecule_authkey_container_path: /molecule-authkey
-        tsdproxy_tailscale_authkeyfile: "{{ tsdproxy_molecule_authkey_container_path }}"
+        tsdproxy_config_tailscale_providers_default_authkeyfile: "{{ tsdproxy_molecule_authkey_container_path }}"
         tsdproxy_container_additional_volumes:
           - "type=bind,src={{ tsdproxy_molecule_authkey_host_path }},dst={{ tsdproxy_molecule_authkey_container_path }},ro"
 
