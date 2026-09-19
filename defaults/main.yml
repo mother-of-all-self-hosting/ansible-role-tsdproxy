@@ -160,7 +160,7 @@ tsdproxy_config_tailscale_providers_default_controlurl: "https://controlplane.ta
 #          controlurl: "{{ tsdproxy_config_tailscale_providers_default_controlurl }}" # use this to override the default control URL
 tsdproxy_config_tailscale_providers_additional_providers: ""
 
-tsdproxy_loglevel: info # set logging level info, error or trace
+tsdproxy_config_log_level: info # set logging level info, error or trace
 tsdproxy_proxyaccesslog: true # set to true to enable container access log
 
 tsdproxy_environment_variables_extension: ""

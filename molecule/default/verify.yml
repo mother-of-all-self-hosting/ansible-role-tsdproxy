@@ -144,11 +144,11 @@
                 | first
               }}
           ansible.builtin.assert:
-            that: tsdproxy_molecule_log_settings['Log level'] == tsdproxy_loglevel
+            that: tsdproxy_molecule_log_settings['Log level'] == tsdproxy_config_log_level
             fail_msg: >-
               TSDProxy reports log level {{ tsdproxy_molecule_log_settings['Log level'] }},
-              expected {{ tsdproxy_loglevel }}
-            success_msg: "TSDProxy runs at log level {{ tsdproxy_loglevel }}"
+              expected {{ tsdproxy_config_log_level }}
+            success_msg: "TSDProxy runs at log level {{ tsdproxy_config_log_level }}"
 
         # ------------------------------------------------------------------
         # The running version is the one Renovate bumps
@@ -258,7 +258,7 @@
           ansible.builtin.assert:
             that:
               - (tsdproxy_molecule_config.http.port | int) == (tsdproxy_container_http_port | int)
-              - tsdproxy_molecule_config.log.level == tsdproxy_loglevel
+              - tsdproxy_molecule_config.log.level == tsdproxy_config_log_level
               - tsdproxy_molecule_config.log.json | bool
               - not (tsdproxy_molecule_config.proxyaccesslog | bool)
               - tsdproxy_molecule_config.tailscale.providers.default.authkeyfile == tsdproxy_molecule_authkey_container_path
