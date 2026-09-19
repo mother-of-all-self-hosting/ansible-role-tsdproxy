@@ -263,7 +263,7 @@
               - not (tsdproxy_molecule_config.proxyaccesslog | bool)
               - tsdproxy_molecule_config.tailscale.providers.default.authkeyfile == tsdproxy_molecule_authkey_container_path
               # Not tuned by this scenario, so read from the role's own defaults.
-              - tsdproxy_molecule_config.tailscale.providers.default.controlurl == tsdproxy_defaults.tsdproxy_controlurl
+              - tsdproxy_molecule_config.tailscale.providers.default.controlurl == tsdproxy_defaults.tsdproxy_config_tailscale_providers_default_controlurl
               - tsdproxy_molecule_config.docker.local.host == tsdproxy_defaults.tsdproxy_docker_endpoint
               - tsdproxy_molecule_config.docker.local.targethostname == '10.99.0.7'
             fail_msg: "The rendered configuration does not match the scenario's variables"
