@@ -43,7 +43,7 @@ provisioner:
         tsdproxy_config_log_level: trace
 
         # Role default: true. TSDProxy's own fallback: true.
-        tsdproxy_proxyaccesslog: false
+        tsdproxy_config_proxyaccesslog: false
 
         # Role default: 8080. TSDProxy's own fallback: 8080.
         #

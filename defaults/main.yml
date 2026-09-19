@@ -161,7 +161,7 @@ tsdproxy_config_tailscale_providers_default_controlurl: "https://controlplane.ta
 tsdproxy_config_tailscale_providers_additional_providers: ""
 
 tsdproxy_config_log_level: info # set logging level info, error or trace
-tsdproxy_proxyaccesslog: true # set to true to enable container access log
+tsdproxy_config_proxyaccesslog: true # set to true to enable container access log
 
 tsdproxy_environment_variables_extension: ""
 
