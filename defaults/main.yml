@@ -163,9 +163,6 @@ tsdproxy_proxyaccesslog: true # set to true to enable container access log
 #          controlurl: "{{ tsdproxy_controlurl }}" # use this to override the default control URL
 tsdproxy_additional_providers: ""
 
-# configuration added to the tsdproxy.yaml file
-tsdproxy_extra_config: ""
-
 tsdproxy_environment_variables_extension: ""
 
 # tsdproxy_restart_necessary controls whether the TSDProxy systemd
