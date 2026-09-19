@@ -140,7 +140,10 @@ tsdproxy_configuration_extension: "{{ tsdproxy_configuration_extension_yaml | fr
 tsdproxy_configuration: "{{ tsdproxy_configuration_yaml | from_yaml | combine(tsdproxy_configuration_extension, recursive=True) }}"
 
 tsdproxy_docker_endpoint: unix:///var/run/docker.sock
-tsdproxy_docker_endpoint_is_unix_socket: true
+
+# Specifies whether the Docker endpoint is a UNIX socket or not.
+# When a socket is used, we need to run the Homarr container with more privileges, so that it can read via the socket.
+tsdproxy_docker_endpoint_is_unix_socket: "{{ tsdproxy_docker_endpoint.startswith('unix://') }}"
 
 tsdproxy_config_files: {}
 
