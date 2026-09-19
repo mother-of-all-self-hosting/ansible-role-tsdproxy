@@ -64,11 +64,17 @@ tsdproxy_container_additional_volumes: "{{ tsdproxy_container_additional_volumes
 tsdproxy_container_additional_volumes_auto: []
 tsdproxy_container_additional_volumes_custom: []
 
+# tsdproxy_container_labels_additional_labels contains a multiline string with additional labels to add to the container label file.
+# See `../templates/labels.j2` for details.
+# To add your own custom labels, use `tsdproxy_container_labels_additional_labels_custom`
+#
 # Example:
-# tsdproxy_container_labels_additional_labels: |
-#   my.label=1
-#   another.label="here"
-tsdproxy_container_labels_additional_labels: ""
+# tsdproxy_container_labels_additional_labels_custom:
+#   - my.label=1
+#   - another.label="here"
+tsdproxy_container_labels_additional_labels: "{{ tsdproxy_container_labels_additional_labels_auto + tsdproxy_container_labels_additional_labels_custom }}"
+tsdproxy_container_labels_additional_labels_auto: []
+tsdproxy_container_labels_additional_labels_custom: []
 
 tsdproxy_systemd_required_services_list: "{{ tsdproxy_systemd_required_services_list_default + tsdproxy_systemd_required_services_list_auto + tsdproxy_systemd_required_services_list_custom }}"
 tsdproxy_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
