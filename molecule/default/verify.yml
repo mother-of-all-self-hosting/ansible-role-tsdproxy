@@ -118,7 +118,7 @@
         # TSDProxy reads `tailscale.providers.default.authkeyfile` while loading its
         # configuration and aborts when the file is unreadable. Reaching the log
         # lines below at all therefore means the bind mount that
-        # `tsdproxy_container_additional_mounts` asked for is really there.
+        # `tsdproxy_container_additional_volumes` asked for is really there.
         - name: Assert TSDProxy read the authkey file the scenario mounted
           ansible.builtin.assert:
             that: "'Error reading auth key file' not in tsdproxy_journal.stdout"
@@ -324,7 +324,7 @@
               # From templates/env.j2, handed over with --env-file.
               - ('TSDPROXY_MOLECULE_MARKER=' + tsdproxy_molecule_env_marker) in tsdproxy_molecule_container.Config.Env
               - tsdproxy_molecule_container.Config.User == (tsdproxy_uid | string) + ':' + (tsdproxy_gid | string)
-              # tsdproxy_container_additional_mounts is rendered as a real --mount.
+              # tsdproxy_container_additional_volumes is rendered as a real --mount.
               # `ReadOnly` is omitted altogether for a read-write mount, hence the
               # default - without it a read-write mount raises instead of failing.
               - (tsdproxy_molecule_authkey_mounts | length) == 1

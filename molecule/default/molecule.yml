@@ -56,7 +56,7 @@ provisioner:
         # TSDProxy reads this file at startup and refuses to start when it
         # cannot, so a green run proves three things at once: the configuration
         # file reached the process, this setting inside it was honoured, and
-        # tsdproxy_container_additional_mounts (which is what puts the file
+        # tsdproxy_container_additional_volumes (which is what puts the file
         # inside the container) is not inert.
         #
         # The key itself is fake. It is never used, because nothing in this
@@ -65,7 +65,7 @@ provisioner:
         tsdproxy_molecule_authkey_host_path: /var/lib/tsdproxy-molecule/authkey
         tsdproxy_molecule_authkey_container_path: /molecule-authkey
         tsdproxy_tailscale_authkeyfile: "{{ tsdproxy_molecule_authkey_container_path }}"
-        tsdproxy_container_additional_mounts:
+        tsdproxy_container_additional_volumes:
           - "type=bind,src={{ tsdproxy_molecule_authkey_host_path }},dst={{ tsdproxy_molecule_authkey_container_path }},ro"
 
         # Exercises tsdproxy_configuration_extension_yaml, the documented way of
