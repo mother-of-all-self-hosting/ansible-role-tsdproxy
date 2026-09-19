@@ -11,6 +11,7 @@
 # Project source code URL: https://github.com/almeidapaulopt/tsdproxy
 
 tsdproxy_enabled: true
+
 tsdproxy_identifier: tsdproxy
 tsdproxy_base_path: "/{{ tsdproxy_identifier }}"
 tsdproxy_config_path: "{{ tsdproxy_base_path }}/config"
