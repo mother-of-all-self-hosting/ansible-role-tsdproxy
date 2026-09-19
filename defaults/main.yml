@@ -152,16 +152,16 @@ tsdproxy_config_tailscale_providers_default_authkeyfile: "" # use this to load a
 
 tsdproxy_config_tailscale_providers_default_controlurl: "https://controlplane.tailscale.com" # use this to override the default control URL
 
-tsdproxy_loglevel: info # set logging level info, error or trace
-tsdproxy_proxyaccesslog: true # set to true to enable container access log
-
-# define additional providers here in following format
-#    tsdproxy_additional_providers: |
+# Specify additional providers here in the following format
+#    tsdproxy_config_tailscale_providers_additional_providers: |
 #        provider-name:
 #          authkey: "{{ tsdproxy_config_tailscale_providers_default_authkey }}" # define authkey here
 #          authkeyfile: "{{ tsdproxy_config_tailscale_providers_default_authkeyfile }}" # use this to load authkey from file. If this is defined, Authkey is ignored
 #          controlurl: "{{ tsdproxy_config_tailscale_providers_default_controlurl }}" # use this to override the default control URL
-tsdproxy_additional_providers: ""
+tsdproxy_config_tailscale_providers_additional_providers: ""
+
+tsdproxy_loglevel: info # set logging level info, error or trace
+tsdproxy_proxyaccesslog: true # set to true to enable container access log
 
 tsdproxy_environment_variables_extension: ""
 
