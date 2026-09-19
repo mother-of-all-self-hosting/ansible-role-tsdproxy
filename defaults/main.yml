@@ -163,7 +163,8 @@ tsdproxy_config_tailscale_providers_additional_providers: ""
 tsdproxy_config_log_level: info # set logging level info, error or trace
 tsdproxy_config_proxyaccesslog: true # set to true to enable container access log
 
-tsdproxy_environment_variables_extension: ""
+# Additional environment variables.
+tsdproxy_environment_variables_additional_variables: ""
 
 # tsdproxy_restart_necessary controls whether the TSDProxy systemd
 # service will be restarted (when true) or merely started (when false) by the

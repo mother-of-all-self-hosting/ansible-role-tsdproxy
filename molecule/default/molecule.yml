@@ -90,7 +90,7 @@ provisioner:
         # (it has no viper/envconfig layer - only the `-config` flag and the
         # YAML file), so this checks the plumbing, not the application.
         tsdproxy_molecule_env_marker: hello-from-molecule-env
-        tsdproxy_environment_variables_extension: |
+        tsdproxy_environment_variables_additional_variables: |
           TSDPROXY_MOLECULE_MARKER={{ tsdproxy_molecule_env_marker }}
 
         tsdproxy_uid: 1000

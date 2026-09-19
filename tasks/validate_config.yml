@@ -19,6 +19,7 @@
     - { "old": "tsdproxy_loglevel", "new": "tsdproxy_config_log_level" }
     - { "old": "tsdproxy_proxyaccesslog", "new": "tsdproxy_config_proxyaccesslog" }
     - { "old": "tsdproxy_extra_config", "new": "tsdproxy_configuration_extension_yaml" }
+    - { "old": "tsdproxy_environment_variables_extension", "new": "tsdproxy_environment_variables_additional_variables" }
     - { "old": "tsdproxy_container_additional_mounts", "new": "tsdproxy_container_additional_volumes" }
     - { "old": "tsdproxy_container_image_force_pull", "new": "<removed> (the new community.docker.docker_image_pull module handles this natively)" }
 
