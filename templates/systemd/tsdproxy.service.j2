@@ -29,6 +29,7 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
       {% if tsdproxy_container_http_host_bind_port %}
       -p {{ tsdproxy_container_http_host_bind_port }}:{{ tsdproxy_container_http_port }} \
       {% endif %}
+      --env-file={{ tsdproxy_base_path }}/env \
       --label-file={{ tsdproxy_base_path }}/labels \
       --network={{ tsdproxy_container_network }} \
       {% for mount in tsdproxy_container_additional_mounts %}
@@ -41,7 +42,6 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
       --mount type=bind,src={{ tsdproxy_docker_endpoint | replace('unix://', '') }},dst=/var/run/docker.sock,ro \
       {% endif %}
       --tmpfs=/tmp:rw,noexec,nosuid,size=100m \
-      --env-file={{ tsdproxy_base_path }}/env \
       {{ tsdproxy_container_image }}
 
 {% for network in tsdproxy_container_additional_networks %}
