@@ -14,7 +14,7 @@ files: {{ tsdproxy_config_files }}
 tailscale:
   providers:
     default: # name of the provider
-      authkey: {{ tsdproxy_tailscale_authkey }} # define authkey here
+      authkey: {{ tsdproxy_config_tailscale_providers_default_authkey }} # define authkey here
       authkeyfile: {{ tsdproxy_config_tailscale_providers_default_authkeyfile }} # use this to load authkey from file. If this is defined, Authkey is ignored
       controlurl: {{ tsdproxy_controlurl }} # use this to override the default control URL
 

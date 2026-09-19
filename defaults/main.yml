@@ -147,7 +147,7 @@ tsdproxy_docker_endpoint_is_unix_socket: "{{ tsdproxy_docker_endpoint.startswith
 
 tsdproxy_config_files: {}
 
-tsdproxy_tailscale_authkey: ""
+tsdproxy_config_tailscale_providers_default_authkey: ""
 tsdproxy_config_tailscale_providers_default_authkeyfile: "" # use this to load authkey from file. If this is defined, Authkey is ignored
 
 tsdproxy_controlurl: "https://controlplane.tailscale.com" # use this to override the default control URL
@@ -158,7 +158,7 @@ tsdproxy_proxyaccesslog: true # set to true to enable container access log
 # define additional providers here in following format
 #    tsdproxy_additional_providers: |
 #        provider-name:
-#          authkey: "{{ tsdproxy_tailscale_authkey }}" # define authkey here
+#          authkey: "{{ tsdproxy_config_tailscale_providers_default_authkey }}" # define authkey here
 #          authkeyfile: "{{ tsdproxy_config_tailscale_providers_default_authkeyfile }}" # use this to load authkey from file. If this is defined, Authkey is ignored
 #          controlurl: "{{ tsdproxy_controlurl }}" # use this to override the default control URL
 tsdproxy_additional_providers: ""
