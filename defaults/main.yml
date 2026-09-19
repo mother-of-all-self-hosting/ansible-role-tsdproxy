@@ -12,28 +12,15 @@
 
 tsdproxy_enabled: true
 tsdproxy_identifier: tsdproxy
+tsdproxy_base_path: "/{{ tsdproxy_identifier }}"
+tsdproxy_config_path: "{{ tsdproxy_base_path }}/config"
+tsdproxy_data_path: "{{ tsdproxy_base_path }}/data"
 
 # renovate: datasource=docker depName=almeidapaulopt/tsdproxy
 tsdproxy_version: 1.4.7
 
 tsdproxy_uid: ""
 tsdproxy_gid: ""
-
-tsdproxy_base_path: "/{{ tsdproxy_identifier }}"
-tsdproxy_config_path: "{{ tsdproxy_base_path }}/config"
-tsdproxy_data_path: "{{ tsdproxy_base_path }}/data"
-
-tsdproxy_systemd_required_services_list: "{{ tsdproxy_systemd_required_services_list_default + tsdproxy_systemd_required_services_list_auto + tsdproxy_systemd_required_services_list_custom }}"
-tsdproxy_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
-tsdproxy_systemd_required_services_list_auto: []
-tsdproxy_systemd_required_services_list_custom: []
-
-tsdproxy_systemd_wanted_services_list: "{{ tsdproxy_systemd_wanted_services_list_default + tsdproxy_systemd_wanted_services_list_auto + tsdproxy_systemd_wanted_services_list_custom }}"
-tsdproxy_systemd_wanted_services_list_default: []
-tsdproxy_systemd_wanted_services_list_auto: []
-tsdproxy_systemd_wanted_services_list_custom: []
-
-tsdproxy_container_additional_mounts: []
 
 tsdproxy_container_image: "{{ tsdproxy_container_image_registry_prefix }}almeidapaulopt/tsdproxy:{{ tsdproxy_container_image_tag }}"
 tsdproxy_container_image_registry_prefix: docker.io/
@@ -45,12 +32,10 @@ tsdproxy_container_network: "{{ tsdproxy_identifier }}"
 # Control if the container network is deleted on uninstalling.
 tsdproxy_container_network_deletion_enabled: true
 
-# A list of additional container networks that the container would be connected to.
-# The role does not create these networks, so make sure they already exist.
-# Use this to expose this container to a reverse proxy, which runs in a different container network.
-tsdproxy_container_additional_networks: "{{ tsdproxy_container_additional_networks_auto + tsdproxy_container_additional_networks_custom }}"
-tsdproxy_container_additional_networks_auto: []
-tsdproxy_container_additional_networks_custom: []
+# Set this to publish TSDProxy's HTTP server on the host (e.g. `127.0.0.1:8080`).
+# TSDProxy does not need it to serve its Tailscale proxies; it only exposes the
+# dashboard.
+tsdproxy_container_http_host_bind_port: ""
 
 # The port that TSDProxy's own HTTP server (its dashboard and health endpoint)
 # listens on inside the container. It is rendered into the configuration file,
@@ -61,10 +46,52 @@ tsdproxy_container_additional_networks_custom: []
 # in this role consults that healthcheck.
 tsdproxy_container_http_port: 8080
 
-# Set this to publish TSDProxy's HTTP server on the host (e.g. `127.0.0.1:8080`).
-# TSDProxy does not need it to serve its Tailscale proxies; it only exposes the
-# dashboard.
-tsdproxy_container_http_host_bind_port: ""
+# A list of additional container networks that the container would be connected to.
+# The role does not create these networks, so make sure they already exist.
+# Use this to expose this container to a reverse proxy, which runs in a different container network.
+tsdproxy_container_additional_networks: "{{ tsdproxy_container_additional_networks_auto + tsdproxy_container_additional_networks_custom }}"
+tsdproxy_container_additional_networks_auto: []
+tsdproxy_container_additional_networks_custom: []
+
+tsdproxy_container_additional_mounts: []
+
+# Example:
+# tsdproxy_container_labels_additional_labels: |
+#   my.label=1
+#   another.label="here"
+tsdproxy_container_labels_additional_labels: ""
+
+tsdproxy_systemd_required_services_list: "{{ tsdproxy_systemd_required_services_list_default + tsdproxy_systemd_required_services_list_auto + tsdproxy_systemd_required_services_list_custom }}"
+tsdproxy_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
+tsdproxy_systemd_required_services_list_auto: []
+tsdproxy_systemd_required_services_list_custom: []
+
+tsdproxy_systemd_wanted_services_list: "{{ tsdproxy_systemd_wanted_services_list_default + tsdproxy_systemd_wanted_services_list_auto + tsdproxy_systemd_wanted_services_list_custom }}"
+tsdproxy_systemd_wanted_services_list_default: []
+tsdproxy_systemd_wanted_services_list_auto: []
+tsdproxy_systemd_wanted_services_list_custom: []
+
+# Default TSDProxy configuration template which covers the generic use case.
+# You can customize it by controlling the various variables inside it.
+#
+# For a more advanced customization, you can extend the default (see `tsdproxy_configuration_yaml`)
+# or completely replace this variable with your own template.
+tsdproxy_configuration_yaml: "{{ lookup('template', 'templates/tsdproxy.yaml.j2') }}"
+
+tsdproxy_configuration_extension_yaml: |
+  # Your custom YAML configuration for TSDProxy goes here.
+  # This configuration extends the default starting configuration (`tsdproxy_configuration_yaml`).
+  #
+  # You can override individual variables from the default configuration, or introduce new ones.
+  #
+  # If you need something more special, you can take full control by
+  # completely redefining `tsdproxy_configuration_yaml`.
+
+tsdproxy_configuration_extension: "{{ tsdproxy_configuration_extension_yaml | from_yaml if tsdproxy_configuration_extension_yaml | from_yaml is mapping else {} }}"
+
+# Holds the final TSDProxy configuration (a combination of the default and its extension).
+# You most likely don't need to touch this variable. Instead, see `tsdproxy_configuration_yaml`.
+tsdproxy_configuration: "{{ tsdproxy_configuration_yaml | from_yaml | combine(tsdproxy_configuration_extension, recursive=True) }}"
 
 tsdproxy_docker_endpoint: unix:///var/run/docker.sock
 tsdproxy_docker_endpoint_is_unix_socket: true
@@ -89,34 +116,6 @@ tsdproxy_additional_providers: ""
 
 # configuration added to the tsdproxy.yaml file
 tsdproxy_extra_config: ""
-
-# Default TSDProxy configuration template which covers the generic use case.
-# You can customize it by controlling the various variables inside it.
-#
-# For a more advanced customization, you can extend the default (see `tsdproxy_configuration_yaml`)
-# or completely replace this variable with your own template.
-tsdproxy_configuration_yaml: "{{ lookup('template', 'templates/tsdproxy.yaml.j2') }}"
-
-tsdproxy_configuration_extension_yaml: |
-  # Your custom YAML configuration for TSDProxy goes here.
-  # This configuration extends the default starting configuration (`tsdproxy_configuration_yaml`).
-  #
-  # You can override individual variables from the default configuration, or introduce new ones.
-  #
-  # If you need something more special, you can take full control by
-  # completely redefining `tsdproxy_configuration_yaml`.
-
-tsdproxy_configuration_extension: "{{ tsdproxy_configuration_extension_yaml | from_yaml if tsdproxy_configuration_extension_yaml | from_yaml is mapping else {} }}"
-
-# Holds the final TSDProxy configuration (a combination of the default and its extension).
-# You most likely don't need to touch this variable. Instead, see `tsdproxy_configuration_yaml`.
-tsdproxy_configuration: "{{ tsdproxy_configuration_yaml | from_yaml | combine(tsdproxy_configuration_extension, recursive=True) }}"
-
-# Example:
-# tsdproxy_container_labels_additional_labels: |
-#   my.label=1
-#   another.label="here"
-tsdproxy_container_labels_additional_labels: ""
 
 tsdproxy_environment_variables_extension: ""
 
