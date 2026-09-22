@@ -87,7 +87,7 @@ Note that the role renders its own `tsdproxy.yaml` into that same folder, becaus
 
 ## Testing
 
-This role has a [Molecule](https://ansible.readthedocs.io/projects/molecule/) test suite. See [`molecule/README.md`](molecule/README.md) for how to run it, and - importantly - for what it can and cannot tell you: exercising TSDProxy's actual purpose needs a real Tailscale authkey and control plane, which CI cannot be given, so the suite deliberately stops one step short of that and says so.
+This role has a [Molecule](https://ansible.readthedocs.io/projects/molecule/) test suite. Refer to [`molecule/README.md`](molecule/README.md) for how to run it, and - importantly - for what it can and cannot tell you: exercising TSDProxy's actual purpose needs a real Tailscale authkey and control plane, which CI cannot be given, so the suite deliberately stops one step short of that and says so.
 
 ## Development
 
