@@ -85,11 +85,9 @@ You will need to use the `tsdproxy_config_files` variable and add your proxy lis
 
 Note that the role renders its own `tsdproxy.yaml` into that same folder, because that is the only path TSDProxy reads its configuration from. Do not edit that file by hand - it is overwritten on every run. Use the role's variables, or `tsdproxy_configuration_extension_yaml`, instead.
 
-## Testing
-
-This role has a [Molecule](https://ansible.readthedocs.io/projects/molecule/) test suite. Refer to [`molecule/README.md`](molecule/README.md) for how to run it, and - importantly - for what it can and cannot tell you: exercising TSDProxy's actual purpose needs a real Tailscale authkey and control plane, which CI cannot be given, so the suite deliberately stops one step short of that and says so.
-
 ## Development
+
+### pre-commit
 
 You can optionally install a Git pre-commit hook (via [mise](https://mise.jdx.dev/) + [prek](https://prek.j178.dev/)) that runs formatting and linting checks before each commit. See [`.pre-commit-config.yaml`](./.pre-commit-config.yaml) for which hooks are to be executed.
 
@@ -98,3 +96,15 @@ To install the hook, run the [`just`](https://github.com/casey/just) command bel
 ```sh
 just prek-install-git-pre-commit-hook
 ```
+
+### Molecule
+
+This role supports [Molecule](https://docs.ansible.com/projects/molecule/), an Ansible testing framework designed for developing and testing Ansible collections, playbooks, and roles.
+
+Refer to [this page](./molecule/README.md) for details about how to utilize it.
+
+### Releases
+
+Tags are created on the GitHub workflow by [`.github/workflows/autotag.yml`](.github/workflows/autotag.yml), which asks [`bin/compute-next-tag.sh`](bin/compute-next-tag.sh) what the commit on `main` should be released as. The answer comes from the version pinned in [`defaults/main.yml`](defaults/main.yml) and from the tags that already exist, so a commit that only touches documentation or CI is not released at all, and any change to the role itself is — without waiting for a dependency bump to carry it along.
+
+[`bin/test-compute-next-tag.sh`](bin/test-compute-next-tag.sh) exercises that script against throwaway repositories, and runs as a prek hook.
