@@ -28,6 +28,12 @@ TSDProxy is an application that automatically creates a proxy to virtual address
 
 See the project's [documentation](https://almeidapaulopt.github.io/tsdproxy/docs/) to learn what TSDProxy does and why it might be useful to you.
 
+## Prerequisites
+
+To run a TSDProxy instance it is necessary to prepare a Tailscale instance.
+
+If you are looking for an Ansible role for [Headscale](https://headscale.net/), you can check out [ansible-role-headscale](https://github.com/mother-of-all-self-hosting/ansible-role-headscale) maintained by the [Mother-of-All-Self-Hosting (MASH)](https://github.com/mother-of-all-self-hosting) team.
+
 ## Adjusting the playbook configuration
 
 To enable TSDProxy with this role, add the following configuration to your `vars.yml` file.
