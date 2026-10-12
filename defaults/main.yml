@@ -41,8 +41,7 @@ tsdproxy_container_network_deletion_enabled: true
 tsdproxy_container_http_host_bind_port: ""
 
 # The port number in the container
-# It is rendered into the configuration file,
-# so changing it moves the listener for real.
+# It is rendered into the configuration file, so changing it moves the listener for real.
 #
 # The image's built-in Docker HEALTHCHECK follows this setting: TSDProxy writes
 # the port it listens on into its data directory, where the healthcheck reads it.
@@ -178,11 +177,14 @@ tsdproxy_docker_target_hostname: host.docker.internal
 #     defaultProxyAccessLog: true
 tsdproxy_config_lists: {}
 
+# Specify AuthKey
 tsdproxy_config_tailscale_providers_default_authkey: ""
-tsdproxy_config_tailscale_providers_default_authkeyfile: "" # use this to load authkey from file. If this is defined, Authkey is ignored
 
-# OAuth client credentials, an alternative to an authkey. When both are defined,
-# `tsdproxy_config_tailscale_providers_default_authkey` and `tsdproxy_config_tailscale_providers_default_authkeyfile` are ignored.
+# Specify AuthKey in a file
+# If defined, `tsdproxy_config_tailscale_providers_default_authkey` is ignored
+tsdproxy_config_tailscale_providers_default_authkeyfile: ""
+
+# Specify OAuth client credentials, an alternative to an AuthKey
 tsdproxy_config_tailscale_providers_default_clientid: ""
 tsdproxy_config_tailscale_providers_default_clientsecret: ""
 
@@ -190,20 +192,25 @@ tsdproxy_config_tailscale_providers_default_clientsecret: ""
 # nodes created with the default provider. Container labels override these.
 tsdproxy_config_tailscale_providers_default_tags: ""
 
-tsdproxy_config_tailscale_providers_default_controlurl: "https://controlplane.tailscale.com" # use this to override the default control URL
+# Specify the default control URL
+tsdproxy_config_tailscale_providers_default_controlurl: "https://controlplane.tailscale.com"
 
 # Specify additional providers here in the following format.
 # Note that TSDProxy's configuration keys are case-sensitive.
 #
 # tsdproxy_config_tailscale_providers_additional_providers: |
 #   provider-name:
-#     authKey: "{{ tsdproxy_config_tailscale_providers_default_authkey }}" # define authkey here
-#     authKeyFile: "{{ tsdproxy_config_tailscale_providers_default_authkeyfile }}" # use this to load authkey from file. If this is defined, Authkey is ignored
-#     controlUrl: "{{ tsdproxy_config_tailscale_providers_default_controlurl }}" # use this to override the default control URL
+#     authKey: "{{ tsdproxy_config_tailscale_providers_default_authkey }}"
+#     authKeyFile: "{{ tsdproxy_config_tailscale_providers_default_authkeyfile }}"
+#     controlUrl: "{{ tsdproxy_config_tailscale_providers_default_controlurl }}"
 tsdproxy_config_tailscale_providers_additional_providers: ""
 
-tsdproxy_config_log_level: info # set logging level: trace, debug, info, warn, error, fatal or panic
-tsdproxy_config_proxyaccesslog: true # set to true to enable container access log
+# Specify a logging level
+# Valid values: trace, debug, info, warn, error, fatal, panic
+tsdproxy_config_log_level: info
+
+# Control if container access log is enabled
+tsdproxy_config_proxyaccesslog: true
 
 # Additional environment variables.
 tsdproxy_environment_variables_additional_variables: ""
