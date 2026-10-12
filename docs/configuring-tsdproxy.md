@@ -48,33 +48,6 @@ tsdproxy_enabled: true
 ########################################################################
 ```
 
-### Set default user's password
-
-You also need to specify a password for the default user. To do so, add the following configuration to your `vars.yml` file. The value can be generated with `pwgen -s 64 1` or in another way.
-
-```yaml
-tsdproxy_environment_variables_tsdproxy_default_pass: YOUR_SECRET_KEY_HERE
-```
-
->[!NOTE]
-> The default user's name is `user` specified with `tsdproxy_environment_variables_tsdproxy_default_user`.
-
-### Exposing the instance (optional)
-
-By default, the TSDProxy instance is not exposed externally, as it is mainly intended to be used in the internal network, connected to other services.
-
-To expose it to the internet, add the following configuration to your `vars.yml` file. Make sure to replace `example.com` with your own value.
-
-```yaml
-tsdproxy_hostname: "example.com"
-
-tsdproxy_container_labels_traefik_enabled: true
-```
-
-After adjusting the hostname, make sure to adjust your DNS records to point the domain to your server.
-
-**Note**: hosting TSDProxy under a subpath (by configuring the `tsdproxy_path_prefix` variable) does not seem to be possible due to TSDProxy's technical limitations.
-
 ### Extending the configuration
 
 There are some additional things you may wish to configure about the service.
@@ -97,9 +70,7 @@ If you use the MASH playbook, the shortcut commands with the [`just` program](ht
 
 ## Usage
 
-After running the command for installation, TSDProxy becomes available internally to other services on the same network. If the service is exposed to the internet, it becomes available at the specified hostname like `https://example.com`.
-
-Refer to [this page](https://www.tsdproxy.com/docs/use-tsdproxy) on the documentation about its usage.
+After running the command for installation, TSDProxy becomes available internally to other services on the same network.
 
 ## Troubleshooting
 
