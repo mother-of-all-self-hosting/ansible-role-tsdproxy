@@ -17,25 +17,15 @@
     - name: Ensure required packages are installed for TSDProxy Molecule tests preparation
       ansible.builtin.package:
         name:
-          # Used by the `ansible.builtin.uri` calls in verify.yml.
-          # The geerlingguy images ship python3 but no curl.
           - python3-requests
-          # The storage driver Docker is configured with below. `overlay2` cannot
-          # be nested inside the container Molecule runs these tests in, and
-          # `vfs` (the usual fallback) has no copy-on-write, so it writes out
-          # every layer of every image in full.
-          - fuse-overlayfs
         state: present
 
     - name: Ensure Docker is installed for TSDProxy Molecule tests preparation
       ansible.builtin.include_role:
         name: ansible-role-docker
-      vars:
-        docker_daemon_options:
-          storage-driver: fuse-overlayfs
 
     # A stand-in for the Tailscale pre-authentication key that a real
-    # deployment would point `tsdproxy_tailscale_authkeyfile` at. TSDProxy reads
+    # deployment would point `tsdproxy_config_tailscale_providers_default_authkeyfile` at. TSDProxy reads
     # the file during configuration loading and exits if it cannot, which is
     # what makes it useful here - see molecule.yml.
     #

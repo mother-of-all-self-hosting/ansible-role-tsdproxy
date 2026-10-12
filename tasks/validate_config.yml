@@ -12,7 +12,19 @@
       Please change your configuration to rename the variable (`{{ item.old }}` -> `{{ item.new }}`).
   when: "lookup('ansible.builtin.varnames', ('^' + item.old + '$'), wantlist=True) | length > 0"
   with_items:
+    - { "old": "tsdproxy_tailscale_authkey", "new": "tsdproxy_config_tailscale_providers_default_authkey" }
+    - { "old": "tsdproxy_tailscale_authkeyfile", "new": "tsdproxy_config_tailscale_providers_default_authkeyfile" }
+    - { "old": "tsdproxy_controlurl", "new": "tsdproxy_config_tailscale_providers_default_controlurl" }
+    - { "old": "tsdproxy_additional_providers", "new": "tsdproxy_config_tailscale_providers_additional_providers" }
+    - { "old": "tsdproxy_loglevel", "new": "tsdproxy_config_log_level" }
+    - { "old": "tsdproxy_proxyaccesslog", "new": "tsdproxy_config_proxyaccesslog" }
+    - { "old": "tsdproxy_extra_config", "new": "tsdproxy_configuration_extension_yaml" }
+    - { "old": "tsdproxy_environment_variables_extension", "new": "tsdproxy_environment_variables_additional_variables" }
+    - { "old": "tsdproxy_container_additional_mounts", "new": "tsdproxy_container_additional_volumes" }
     - { "old": "tsdproxy_container_image_force_pull", "new": "<removed> (the new community.docker.docker_image_pull module handles this natively)" }
+    - { "old": "tsdproxy_tailscale_client_id", "new": "tsdproxy_config_tailscale_providers_default_clientid" }
+    - { "old": "tsdproxy_tailscale_client_secret", "new": "tsdproxy_config_tailscale_providers_default_clientsecret" }
+    - { "old": "tsdproxy_tailscale_tags", "new": "tsdproxy_config_tailscale_providers_default_tags" }
     - { "old": "tsdproxy_config_files", "new": "tsdproxy_config_lists (TSDProxy v2 renamed this section and changed the format of its entries, see the README)" }
 
 - name: Fail if required TSDProxy settings not defined
@@ -24,12 +36,12 @@
     - tsdproxy_uid
     - tsdproxy_gid
     - tsdproxy_docker_endpoint
-    - tsdproxy_controlurl
+    - tsdproxy_config_tailscale_providers_default_controlurl
 
 # TSDProxy v2 renamed most of its configuration keys to camelCase (`authkey` ->
 # `authKey`, `targethostname` -> `targetHostname`, `files` -> `lists`, ...) and
 # rejects any key it does not know. A v1 key carried over through
-# `tsdproxy_additional_providers`, `tsdproxy_extra_config` or
+# `tsdproxy_config_tailscale_providers_additional_providers` or
 # `tsdproxy_configuration_extension_yaml` would therefore not be ignored, but
 # make TSDProxy exit at startup - and, under `Restart=always`, crash-loop.
 - name: Fail if the TSDProxy configuration contains TSDProxy v1 keys

@@ -123,7 +123,7 @@
     # configuration and exits when the file is unreadable, and it rejects
     # unknown (e.g. TSDProxy v1-style) keys the same way. Getting this far
     # therefore means the configuration is acceptable to it, and that the bind
-    # mount `tsdproxy_container_additional_mounts` asked for is really there.
+    # mount `tsdproxy_container_additional_volumes` asked for is really there.
     #
     # `log.json` is hardcoded to false in the role's template and defaults to
     # false in TSDProxy, so this line arriving as JSON can only be the result of
@@ -147,11 +147,11 @@
             | first
           }}
       ansible.builtin.assert:
-        that: tsdproxy_molecule_log_settings['Log level'] == tsdproxy_loglevel
+        that: tsdproxy_molecule_log_settings['Log level'] == tsdproxy_config_log_level
         fail_msg: >-
           TSDProxy reports log level {{ tsdproxy_molecule_log_settings['Log level'] }},
-          expected {{ tsdproxy_loglevel }}
-        success_msg: "TSDProxy runs at log level {{ tsdproxy_loglevel }}"
+          expected {{ tsdproxy_config_log_level }}
+        success_msg: "TSDProxy runs at log level {{ tsdproxy_config_log_level }}"
 
     # ------------------------------------------------------------------
     # The running version is the one Renovate bumps
@@ -317,11 +317,11 @@
       ansible.builtin.assert:
         that:
           - (tsdproxy_molecule_config.http.port | int) == (tsdproxy_container_http_port | int)
-          - tsdproxy_molecule_config.log.level == tsdproxy_loglevel
+          - tsdproxy_molecule_config.log.level == tsdproxy_config_log_level
           - tsdproxy_molecule_config.log.json | bool
           - tsdproxy_molecule_config.proxyAccessLog is false
           - tsdproxy_molecule_config.tailscale.providers.default.authKeyFile == tsdproxy_molecule_authkey_container_path
-          - tsdproxy_molecule_config.tailscale.providers.default.controlUrl == tsdproxy_controlurl
+          - tsdproxy_molecule_config.tailscale.providers.default.controlUrl == tsdproxy_config_tailscale_providers_default_controlurl
           - tsdproxy_molecule_config.docker.local.targetHostname == '10.99.0.7'
           # Not tuned by this scenario, so read from the role's own defaults.
           - tsdproxy_molecule_config.docker.local.host == tsdproxy_defaults.tsdproxy_docker_endpoint
@@ -385,7 +385,7 @@
           # From templates/env.j2, handed over with --env-file.
           - ('TSDPROXY_MOLECULE_MARKER=' + tsdproxy_molecule_env_marker) in tsdproxy_molecule_container.Config.Env
           - tsdproxy_molecule_container.Config.User == (tsdproxy_uid | string) + ':' + (tsdproxy_gid | string)
-          # tsdproxy_container_additional_mounts is rendered as a real --mount.
+          # tsdproxy_container_additional_volumes is rendered as a real --mount.
           # `ReadOnly` is omitted altogether for a read-write mount, hence the
           # default - without it a read-write mount raises instead of failing.
           - (tsdproxy_molecule_authkey_mounts | length) == 1

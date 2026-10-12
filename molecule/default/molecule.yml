@@ -16,6 +16,13 @@ platforms:
     command: ${MOLECULE_DOCKER_COMMAND:-""}
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      # Docker inside the instance stores images via containerd. Its storage
+      # cannot use overlay on top of the instance's own overlay filesystem, so a
+      # volume puts it on a real filesystem.
+      - /var/lib/containerd
+    # Remove volumes along with the instance, so that local runs do not leave
+    # gigabytes behind.
+    keep_volumes: false
     cgroupns_mode: host
     privileged: true
     pre_build_image: true
@@ -29,6 +36,7 @@ provisioner:
       all:
         # Helper variables
         tsdproxy_debug_service_enabled: false
+        tsdproxy_restarts_check_enabled: true
 
         # Every value below is deliberately different from both the role's own
         # default AND from the configuration TSDProxy generates for itself when
@@ -39,10 +47,10 @@ provisioner:
         # ignored it and fell back to its own.
 
         # Role default: info. TSDProxy's own fallback: info.
-        tsdproxy_loglevel: trace
+        tsdproxy_config_log_level: trace
 
         # Role default: true. TSDProxy's own fallback: true.
-        tsdproxy_proxyaccesslog: false
+        tsdproxy_config_proxyaccesslog: false
 
         # Role default: 8080. TSDProxy's own fallback: 8080.
         #
@@ -55,16 +63,16 @@ provisioner:
         # TSDProxy reads this file at startup and refuses to start when it
         # cannot, so a green run proves three things at once: the configuration
         # file reached the process, this setting inside it was honoured, and
-        # tsdproxy_container_additional_mounts (which is what puts the file
+        # tsdproxy_container_additional_volumes (which is what puts the file
         # inside the container) is not inert.
         #
         # The key itself is fake. TSDProxy does try to register a Tailscale node
         # with it for the labelled service that prepare.yml starts, but only
-        # against tsdproxy_controlurl below, which leads nowhere. See molecule/README.md.
+        # against tsdproxy_config_tailscale_providers_default_controlurl below, which leads nowhere. See molecule/README.md.
         tsdproxy_molecule_authkey_host_path: /var/lib/tsdproxy-molecule/authkey
         tsdproxy_molecule_authkey_container_path: /molecule-authkey
-        tsdproxy_tailscale_authkeyfile: "{{ tsdproxy_molecule_authkey_container_path }}"
-        tsdproxy_container_additional_mounts:
+        tsdproxy_config_tailscale_providers_default_authkeyfile: "{{ tsdproxy_molecule_authkey_container_path }}"
+        tsdproxy_container_additional_volumes:
           - "type=bind,src={{ tsdproxy_molecule_authkey_host_path }},dst={{ tsdproxy_molecule_authkey_container_path }},ro"
 
         # Exercises tsdproxy_configuration_extension_yaml, the documented way of
@@ -85,7 +93,7 @@ provisioner:
         # node has to authenticate somewhere. Nothing listens on the discard
         # port, so the attempt fails at once and locally, instead of sending a
         # fake authkey to Tailscale's real control plane on every CI run.
-        tsdproxy_controlurl: http://127.0.0.1:9
+        tsdproxy_config_tailscale_providers_default_controlurl: http://127.0.0.1:9
 
         # A service for TSDProxy to discover, started by prepare.yml on a network
         # of its own. TSDProxy only reaches it because of this
@@ -112,7 +120,7 @@ provisioner:
         # and stops the node created for the labelled service from uploading its
         # logs to log.tailscale.com.
         tsdproxy_molecule_env_marker: hello-from-molecule-env
-        tsdproxy_environment_variables_extension: |
+        tsdproxy_environment_variables_additional_variables: |
           TSDPROXY_MOLECULE_MARKER={{ tsdproxy_molecule_env_marker }}
           TS_NO_LOGS_NO_SUPPORT=true
 

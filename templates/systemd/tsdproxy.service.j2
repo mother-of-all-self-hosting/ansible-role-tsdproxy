@@ -17,33 +17,33 @@ DefaultDependencies=no
 
 [Service]
 Type=simple
-ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} stop --time={{ devture_systemd_docker_base_container_stop_grace_time_seconds }} {{ tsdproxy_identifier }} 2>/dev/null || true'
-ExecStartPre=-{{ devture_systemd_docker_base_host_command_sh }} -c '{{ devture_systemd_docker_base_host_command_docker }} rm {{ tsdproxy_identifier }} 2>/dev/null || true'
+Environment="HOME={{ devture_systemd_docker_base_systemd_unit_home_path }}"
+ExecStartPre={{ devture_systemd_docker_base_host_command_sh }} -c '{{ tsdproxy_container_cleanup_command | trim | replace("\n", " ") }}'
 
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
-                --rm \
-                --name={{ tsdproxy_identifier }} \
-                --log-driver=none \
-                --user={{ tsdproxy_uid }}:{{ tsdproxy_gid }} \
-                --cap-drop=ALL \
-                {% if tsdproxy_container_http_host_bind_port %}
-                -p {{ tsdproxy_container_http_host_bind_port }}:{{ tsdproxy_container_http_port }} \
-                {% endif %}
-                --label-file={{ tsdproxy_base_path }}/labels \
-                --network={{ tsdproxy_container_network }} \
-                --add-host=host.docker.internal:host-gateway \
-                {% for mount in tsdproxy_container_additional_mounts %}
-                --mount {{ mount }} \
-                {% endfor %}
-                --mount type=bind,src={{ tsdproxy_data_path }},dst=/data \
-                --mount type=bind,src={{ tsdproxy_config_path }},dst=/config \
-                {% if tsdproxy_docker_endpoint_is_unix_socket %}
-                --privileged \
-                --mount type=bind,src={{ tsdproxy_docker_endpoint | replace('unix://', '') }},dst=/var/run/docker.sock,ro \
-                {% endif %}
-                --tmpfs=/tmp:rw,noexec,nosuid,size=100m \
-                --env-file={{ tsdproxy_base_path }}/env \
-                {{ tsdproxy_container_image }}
+      --rm \
+      --name={{ tsdproxy_identifier }} \
+      --log-driver=none \
+      --user={{ tsdproxy_uid }}:{{ tsdproxy_gid }} \
+      --cap-drop=ALL \
+      {% if tsdproxy_container_http_host_bind_port %}
+      -p {{ tsdproxy_container_http_host_bind_port }}:{{ tsdproxy_container_http_port }} \
+      {% endif %}
+      --env-file={{ tsdproxy_base_path }}/env \
+      --label-file={{ tsdproxy_base_path }}/labels \
+      --network={{ tsdproxy_container_network }} \
+      --add-host=host.docker.internal:host-gateway \
+      {% for volume in tsdproxy_container_additional_volumes %}
+      --mount type={{ volume.type | default('bind' if '/' in volume.src else 'volume') }},src={{ volume.src }},dst={{ volume.dst }}{{ (',' + volume.options) if volume.options | default('') else '' }} \
+      {% endfor %}
+      --mount type=bind,src={{ tsdproxy_data_path }},dst=/data \
+      --mount type=bind,src={{ tsdproxy_config_path }},dst=/config \
+      {% if tsdproxy_docker_endpoint_is_unix_socket %}
+      --privileged \
+      --mount type=bind,src={{ tsdproxy_docker_endpoint | replace('unix://', '') }},dst=/var/run/docker.sock,ro \
+      {% endif %}
+      --tmpfs=/tmp:rw,noexec,nosuid,size=100m \
+      {{ tsdproxy_container_image }}
 
 {% for network in tsdproxy_container_additional_networks %}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} network connect {{ network }} {{ tsdproxy_identifier }}

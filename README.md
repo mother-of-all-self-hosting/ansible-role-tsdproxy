@@ -27,20 +27,21 @@ It is mandatory to set following variables:
 tsdproxy_uid: '' # the uid the container runs as
 tsdproxy_gid: '' # the gid the container runs as - see "Access to the container socket" below
 
-tsdproxy_tailscale_authkey: '' # OR
-tsdproxy_tailscale_authkeyfile: '' # use this to load authkey from file. If this is defined, Authkey is ignored
+tsdproxy_config_tailscale_providers_default_authkey: '' # OR
+tsdproxy_config_tailscale_providers_default_authkeyfile: '' # use this to load authkey from file. If this is defined, Authkey is ignored
 ```
 
-Instead of an authkey, you can also let TSDProxy authenticate with an [OAuth client](https://almeidapaulopt.github.io/tsdproxy/docs/advanced/tailscale/) by setting `tsdproxy_tailscale_client_id` and `tsdproxy_tailscale_client_secret` (and usually `tsdproxy_tailscale_tags`).
+Instead of an authkey, you can also let TSDProxy authenticate with an [OAuth client](https://almeidapaulopt.github.io/tsdproxy/docs/advanced/tailscale/) by setting `tsdproxy_config_tailscale_providers_default_clientid` and `tsdproxy_config_tailscale_providers_default_clientsecret` (and usually `tsdproxy_config_tailscale_providers_default_tags`).
 
 ### Upgrading from TSDProxy v1
 
 This role installs TSDProxy v2, whose configuration file format is incompatible with v1. The role takes care of the file it renders, but anything you add to it yourself has to follow the new format, and so do your services' labels and proxy lists. See the [upstream upgrade guide](https://almeidapaulopt.github.io/tsdproxy/docs/upgrading/from-v1/) for the details. In short:
 
-- **Configuration keys are case-sensitive and mostly camelCase now** (`authKey`, `authKeyFile`, `controlUrl`, `targetHostname`, `defaultProxyProvider`, `proxyAccessLog`, `dataDir`, ...), and TSDProxy refuses to start when it finds a key it does not know - including the old all-lowercase ones. Update anything you pass in through `tsdproxy_additional_providers`, `tsdproxy_extra_config` or `tsdproxy_configuration_extension_yaml`. The role fails early, before touching the running instance, when it finds a v1 key there.
+- **Configuration keys are case-sensitive and mostly camelCase now** (`authKey`, `authKeyFile`, `controlUrl`, `targetHostname`, `defaultProxyProvider`, `proxyAccessLog`, `dataDir`, ...), and TSDProxy refuses to start when it finds a key it does not know - including the old all-lowercase ones. Update anything you pass in through `tsdproxy_config_tailscale_providers_additional_providers` or `tsdproxy_configuration_extension_yaml`. The role fails early, before touching the running instance, when it finds a v1 key there.
 - **`files` was renamed to `lists`**, so `tsdproxy_config_files` is now `tsdproxy_config_lists`, and the list files themselves have a new format (see [Via Proxy list](#via-proxy-list)).
 - **Port labels changed.** `tsdproxy.container_port`, `tsdproxy.scheme`, `tsdproxy.tlsvalidate` and `tsdproxy.funnel` still work, but have been superseded by `tsdproxy.port.<index>` (see [Via container labels](#via-container-labels)).
 - **The dashboard requires authentication** - see [The dashboard](#the-dashboard).
+- **Several role variables were renamed** to follow the structure of the configuration file (e.g. `tsdproxy_tailscale_authkey` -> `tsdproxy_config_tailscale_providers_default_authkey`, `tsdproxy_loglevel` -> `tsdproxy_config_log_level`). The role reports each renamed variable you still use, along with its new name.
 
 ### Access to the container socket
 
@@ -52,9 +53,9 @@ If you would rather not hand a container the real socket, put something like [an
 
 ### Where the Tailscale authkey ends up
 
-The role renders `tsdproxy_tailscale_authkey` into `{{ tsdproxy_config_path }}/tsdproxy.yaml` in clear text, owned by `tsdproxy_uid:tsdproxy_gid` with mode `0660`. It is not written to the systemd unit and not logged.
+The role renders `tsdproxy_config_tailscale_providers_default_authkey` into `{{ tsdproxy_config_path }}/tsdproxy.yaml` in clear text, owned by `tsdproxy_uid:tsdproxy_gid` with mode `0660`. It is not written to the systemd unit and not logged.
 
-`tsdproxy_tailscale_authkeyfile` is the alternative: TSDProxy reads the key out of a file at startup, so the key itself never has to appear in your playbook's variables or in the rendered configuration. The file has to be readable from inside the container - use `tsdproxy_container_additional_mounts` to put it there.
+`tsdproxy_config_tailscale_providers_default_authkeyfile` is the alternative: TSDProxy reads the key out of a file at startup, so the key itself never has to appear in your playbook's variables or in the rendered configuration. The file has to be readable from inside the container - use `tsdproxy_container_additional_volumes` to put it there.
 
 ### The dashboard
 
@@ -126,11 +127,9 @@ nas:
 
 Note that the role renders its own `tsdproxy.yaml` into that same folder, because that is the only path TSDProxy reads its configuration from. Do not edit that file by hand - it is overwritten on every run. Use the role's variables, or `tsdproxy_configuration_extension_yaml`, instead.
 
-## Testing
-
-This role has a [Molecule](https://ansible.readthedocs.io/projects/molecule/) test suite. See [`molecule/README.md`](molecule/README.md) for how to run it, and - importantly - for what it can and cannot tell you: exercising TSDProxy's actual purpose needs a real Tailscale authkey and control plane, which CI cannot be given, so the suite deliberately stops one step short of that and says so.
-
 ## Development
+
+### pre-commit
 
 You can optionally install a Git pre-commit hook (via [mise](https://mise.jdx.dev/) + [prek](https://prek.j178.dev/)) that runs formatting and linting checks before each commit. See [`.pre-commit-config.yaml`](./.pre-commit-config.yaml) for which hooks are to be executed.
 
@@ -139,3 +138,15 @@ To install the hook, run the [`just`](https://github.com/casey/just) command bel
 ```sh
 just prek-install-git-pre-commit-hook
 ```
+
+### Molecule
+
+This role supports [Molecule](https://docs.ansible.com/projects/molecule/), an Ansible testing framework designed for developing and testing Ansible collections, playbooks, and roles.
+
+Refer to [this page](./molecule/README.md) for details about how to utilize it.
+
+### Releases
+
+Tags are created on the GitHub workflow by [`.github/workflows/autotag.yml`](.github/workflows/autotag.yml), which asks [`bin/compute-next-tag.sh`](bin/compute-next-tag.sh) what the commit on `main` should be released as. The answer comes from the version pinned in [`defaults/main.yml`](defaults/main.yml) and from the tags that already exist, so a commit that only touches documentation or CI is not released at all, and any change to the role itself is — without waiting for a dependency bump to carry it along.
+
+[`bin/test-compute-next-tag.sh`](bin/test-compute-next-tag.sh) exercises that script against throwaway repositories, and runs as a prek hook.

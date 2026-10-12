@@ -11,7 +11,11 @@
 # Project source code URL: https://github.com/almeidapaulopt/tsdproxy
 
 tsdproxy_enabled: true
+
 tsdproxy_identifier: tsdproxy
+tsdproxy_base_path: "/{{ tsdproxy_identifier }}"
+tsdproxy_config_path: "{{ tsdproxy_base_path }}/config"
+tsdproxy_data_path: "{{ tsdproxy_base_path }}/data"
 
 # renovate: datasource=docker depName=almeidapaulopt/tsdproxy
 tsdproxy_version: 2.3.4
@@ -19,32 +23,30 @@ tsdproxy_version: 2.3.4
 tsdproxy_uid: ""
 tsdproxy_gid: ""
 
-tsdproxy_base_path: "/{{ tsdproxy_identifier }}"
-tsdproxy_config_path: "{{ tsdproxy_base_path }}/config"
-tsdproxy_data_path: "{{ tsdproxy_base_path }}/data"
-tsdproxy_env_path: "{{ tsdproxy_config_path }}/env"
-
-tsdproxy_systemd_required_services_list: "{{ tsdproxy_systemd_required_services_list_default + tsdproxy_systemd_required_services_list_auto + tsdproxy_systemd_required_services_list_custom }}"
-tsdproxy_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
-tsdproxy_systemd_required_services_list_auto: []
-tsdproxy_systemd_required_services_list_custom: []
-
-tsdproxy_systemd_wanted_services_list: "{{ tsdproxy_systemd_wanted_services_list_default + tsdproxy_systemd_wanted_services_list_auto + tsdproxy_systemd_wanted_services_list_custom }}"
-tsdproxy_systemd_wanted_services_list_default: []
-tsdproxy_systemd_wanted_services_list_auto: []
-tsdproxy_systemd_wanted_services_list_custom: []
-
-tsdproxy_container_additional_mounts: []
-
 tsdproxy_container_image: "{{ tsdproxy_container_image_registry_prefix }}almeidapaulopt/tsdproxy:{{ tsdproxy_container_image_tag }}"
-tsdproxy_container_image_registry_prefix: docker.io/
 tsdproxy_container_image_tag: "{{ tsdproxy_version }}"
+tsdproxy_container_image_registry_prefix: "{{ tsdproxy_container_image_registry_prefix_upstream }}"
+tsdproxy_container_image_registry_prefix_upstream: "{{ tsdproxy_container_image_registry_prefix_upstream_default }}"
+tsdproxy_container_image_registry_prefix_upstream_default: docker.io/
 
 # The base container network. It will be auto-created by this role if it doesn't exist already.
 tsdproxy_container_network: "{{ tsdproxy_identifier }}"
 
 # Control if the container network is deleted on uninstalling.
 tsdproxy_container_network_deletion_enabled: true
+
+# Specify how the container publishes its HTTP port (as defined by `tsdproxy_container_http_port`).
+#
+# Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:2586"), or empty string to not expose.
+tsdproxy_container_http_host_bind_port: ""
+
+# The port number in the container
+# It is rendered into the configuration file,
+# so changing it moves the listener for real.
+#
+# The image's built-in Docker HEALTHCHECK follows this setting: TSDProxy writes
+# the port it listens on into its data directory, where the healthcheck reads it.
+tsdproxy_container_http_port: 8080
 
 # A list of additional container networks that the container would be connected to.
 # The role does not create these networks, so make sure they already exist.
@@ -53,21 +55,97 @@ tsdproxy_container_additional_networks: "{{ tsdproxy_container_additional_networ
 tsdproxy_container_additional_networks_auto: []
 tsdproxy_container_additional_networks_custom: []
 
-# The port that TSDProxy's own HTTP server (its dashboard and health endpoint)
-# listens on inside the container. It is rendered into the configuration file,
-# so changing it moves the listener for real.
-#
-# The image's built-in Docker HEALTHCHECK follows this setting: TSDProxy writes
-# the port it listens on into its data directory, where the healthcheck reads it.
-tsdproxy_container_http_port: 8080
+# A list of additional "volumes" to mount in the container.
+# This list gets populated dynamically at runtime. You can provide a different default value,
+# if you wish to mount your own files into the container.
+# Contains definition objects like this: `{"type": "bind", "src": "/outside", "dst": "/inside", "options": "readonly"}.
+# See the `--mount` documentation for the `docker run` command.
+tsdproxy_container_additional_volumes: "{{ tsdproxy_container_additional_volumes_auto + tsdproxy_container_additional_volumes_custom }}"
+tsdproxy_container_additional_volumes_auto: []
+tsdproxy_container_additional_volumes_custom: []
 
-# Set this to publish TSDProxy's HTTP server on the host (e.g. `127.0.0.1:8080`).
-# TSDProxy does not need it to serve its Tailscale proxies; it only exposes the
-# dashboard.
-tsdproxy_container_http_host_bind_port: ""
+# tsdproxy_container_labels_additional_labels contains a multiline string with additional labels to add to the container label file.
+# See `../templates/labels.j2` for details.
+# To add your own custom labels, use `tsdproxy_container_labels_additional_labels_custom`
+#
+# Example:
+# tsdproxy_container_labels_additional_labels_custom:
+#   - my.label=1
+#   - another.label="here"
+tsdproxy_container_labels_additional_labels: "{{ tsdproxy_container_labels_additional_labels_auto + tsdproxy_container_labels_additional_labels_custom }}"
+tsdproxy_container_labels_additional_labels_auto: []
+tsdproxy_container_labels_additional_labels_custom: []
+
+# List of systemd services that the TSDProxy systemd service depends on
+tsdproxy_systemd_required_services_list: "{{ tsdproxy_systemd_required_services_list_default + tsdproxy_systemd_required_services_list_auto + tsdproxy_systemd_required_services_list_custom }}"
+tsdproxy_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
+tsdproxy_systemd_required_services_list_auto: []
+tsdproxy_systemd_required_services_list_custom: []
+
+# List of systemd services that the TSDProxy systemd service wants
+tsdproxy_systemd_wanted_services_list: "{{ tsdproxy_systemd_wanted_services_list_default + tsdproxy_systemd_wanted_services_list_auto + tsdproxy_systemd_wanted_services_list_custom }}"
+tsdproxy_systemd_wanted_services_list_default: []
+tsdproxy_systemd_wanted_services_list_auto: []
+tsdproxy_systemd_wanted_services_list_custom: []
+
+# Controls how long to wait for the container to stop gracefully before killing it.
+tsdproxy_container_stop_grace_time_seconds: "{{ devture_systemd_docker_base_container_stop_grace_time_seconds }}"
+
+# Controls how long the pre-start cleanup should wait for stale container-name release
+# before failing startup explicitly.
+tsdproxy_container_cleanup_timeout_seconds: "{{ devture_systemd_docker_base_container_cleanup_timeout_seconds }}"
+
+# Controls the delay between pre-start cleanup retries.
+tsdproxy_container_cleanup_retry_delay_seconds: "{{ devture_systemd_docker_base_container_cleanup_retry_delay_seconds }}"
+
+# Shell command used in the systemd pre-start phase to deterministically remove a stale
+# container and wait until Docker releases its name.
+tsdproxy_container_cleanup_command: |
+  i=0;
+  while [ "$i" -lt {{ tsdproxy_container_cleanup_timeout_seconds }} ]; do
+  {{ devture_systemd_docker_base_host_command_docker }} stop -t {{ tsdproxy_container_stop_grace_time_seconds }} {{ tsdproxy_identifier }} >/dev/null 2>&1 || true;
+  {{ devture_systemd_docker_base_host_command_docker }} rm -f {{ tsdproxy_identifier }} >/dev/null 2>&1 || true;
+  if {{ devture_systemd_docker_base_host_command_docker }} container inspect {{ tsdproxy_identifier }} >/dev/null 2>&1; then
+  i=$((i + 1));
+  sleep {{ tsdproxy_container_cleanup_retry_delay_seconds }};
+  continue;
+  fi;
+  if {{ devture_systemd_docker_base_host_command_docker }} info >/dev/null 2>&1; then
+  exit 0;
+  fi;
+  echo "Failed to query Docker daemon while cleaning up {{ tsdproxy_identifier }}" >&2;
+  exit 1;
+  done;
+  echo "Failed to remove stale container {{ tsdproxy_identifier }} after {{ tsdproxy_container_cleanup_timeout_seconds }} attempts" >&2;
+  exit 1
+
+# Default TSDProxy configuration template which covers the generic use case.
+# You can customize it by controlling the various variables inside it.
+#
+# For a more advanced customization, you can extend the default (see `tsdproxy_configuration_yaml`)
+# or completely replace this variable with your own template.
+tsdproxy_configuration_yaml: "{{ lookup('template', 'templates/tsdproxy.yaml.j2') }}"
+
+tsdproxy_configuration_extension_yaml: |
+  # Your custom YAML configuration for TSDProxy goes here.
+  # This configuration extends the default starting configuration (`tsdproxy_configuration_yaml`).
+  #
+  # You can override individual variables from the default configuration, or introduce new ones.
+  #
+  # If you need something more special, you can take full control by
+  # completely redefining `tsdproxy_configuration_yaml`.
+
+tsdproxy_configuration_extension: "{{ tsdproxy_configuration_extension_yaml | from_yaml if tsdproxy_configuration_extension_yaml | from_yaml is mapping else {} }}"
+
+# Holds the final TSDProxy configuration (a combination of the default and its extension).
+# You most likely don't need to touch this variable. Instead, see `tsdproxy_configuration_yaml`.
+tsdproxy_configuration: "{{ tsdproxy_configuration_yaml | from_yaml | combine(tsdproxy_configuration_extension, recursive=True) }}"
 
 tsdproxy_docker_endpoint: unix:///var/run/docker.sock
-tsdproxy_docker_endpoint_is_unix_socket: true
+
+# Specifies whether the Docker endpoint is a UNIX socket or not.
+# When a socket is used, we need to run the Homarr container with more privileges, so that it can read via the socket.
+tsdproxy_docker_endpoint_is_unix_socket: "{{ tsdproxy_docker_endpoint.startswith('unix://') }}"
 
 # Controls whether TSDProxy finds the services it proxies by probing them over
 # the container networks it shares with them (`tryDockerInternalNetwork`).
@@ -100,65 +178,35 @@ tsdproxy_docker_target_hostname: host.docker.internal
 #     defaultProxyAccessLog: true
 tsdproxy_config_lists: {}
 
-tsdproxy_tailscale_authkey: ""
-tsdproxy_tailscale_authkeyfile: "" # use this to load authkey from file. If this is defined, Authkey is ignored
+tsdproxy_config_tailscale_providers_default_authkey: ""
+tsdproxy_config_tailscale_providers_default_authkeyfile: "" # use this to load authkey from file. If this is defined, Authkey is ignored
 
 # OAuth client credentials, an alternative to an authkey. When both are defined,
-# `tsdproxy_tailscale_authkey` and `tsdproxy_tailscale_authkeyfile` are ignored.
-tsdproxy_tailscale_client_id: ""
-tsdproxy_tailscale_client_secret: ""
+# `tsdproxy_config_tailscale_providers_default_authkey` and `tsdproxy_config_tailscale_providers_default_authkeyfile` are ignored.
+tsdproxy_config_tailscale_providers_default_clientid: ""
+tsdproxy_config_tailscale_providers_default_clientsecret: ""
 
 # Default tags (comma-separated, e.g. `tag:server,tag:web`) for the Tailscale
 # nodes created with the default provider. Container labels override these.
-tsdproxy_tailscale_tags: ""
+tsdproxy_config_tailscale_providers_default_tags: ""
 
-tsdproxy_controlurl: "https://controlplane.tailscale.com" # use this to override the default control URL
+tsdproxy_config_tailscale_providers_default_controlurl: "https://controlplane.tailscale.com" # use this to override the default control URL
 
-tsdproxy_loglevel: info # set logging level: trace, debug, info, warn, error, fatal or panic
-tsdproxy_proxyaccesslog: true # set to true to enable container access log
-
-# Define additional Tailscale providers here, in the following format.
+# Specify additional providers here in the following format.
 # Note that TSDProxy's configuration keys are case-sensitive.
 #
-# tsdproxy_additional_providers: |
+# tsdproxy_config_tailscale_providers_additional_providers: |
 #   provider-name:
-#     authKey: "{{ tsdproxy_tailscale_authkey }}" # define authkey here
-#     authKeyFile: "{{ tsdproxy_tailscale_authkeyfile }}" # use this to load authkey from file. If this is defined, Authkey is ignored
-#     controlUrl: "{{ tsdproxy_controlurl }}" # use this to override the default control URL
-tsdproxy_additional_providers: ""
+#     authKey: "{{ tsdproxy_config_tailscale_providers_default_authkey }}" # define authkey here
+#     authKeyFile: "{{ tsdproxy_config_tailscale_providers_default_authkeyfile }}" # use this to load authkey from file. If this is defined, Authkey is ignored
+#     controlUrl: "{{ tsdproxy_config_tailscale_providers_default_controlurl }}" # use this to override the default control URL
+tsdproxy_config_tailscale_providers_additional_providers: ""
 
-# configuration added to the tsdproxy.yaml file
-tsdproxy_extra_config: ""
+tsdproxy_config_log_level: info # set logging level: trace, debug, info, warn, error, fatal or panic
+tsdproxy_config_proxyaccesslog: true # set to true to enable container access log
 
-# Default TSDProxy configuration template which covers the generic use case.
-# You can customize it by controlling the various variables inside it.
-#
-# For a more advanced customization, you can extend the default (see `tsdproxy_configuration_yaml`)
-# or completely replace this variable with your own template.
-tsdproxy_configuration_yaml: "{{ lookup('template', 'templates/tsdproxy.yaml.j2') }}"
-
-tsdproxy_configuration_extension_yaml: |
-  # Your custom YAML configuration for TSDProxy goes here.
-  # This configuration extends the default starting configuration (`tsdproxy_configuration_yaml`).
-  #
-  # You can override individual variables from the default configuration, or introduce new ones.
-  #
-  # If you need something more special, you can take full control by
-  # completely redefining `tsdproxy_configuration_yaml`.
-
-tsdproxy_configuration_extension: "{{ tsdproxy_configuration_extension_yaml | from_yaml if tsdproxy_configuration_extension_yaml | from_yaml is mapping else {} }}"
-
-# Holds the final TSDProxy configuration (a combination of the default and its extension).
-# You most likely don't need to touch this variable. Instead, see `tsdproxy_configuration_yaml`.
-tsdproxy_configuration: "{{ tsdproxy_configuration_yaml | from_yaml | combine(tsdproxy_configuration_extension, recursive=True) }}"
-
-# Example:
-# tsdproxy_container_labels_additional_labels: |
-#   my.label=1
-#   another.label="here"
-tsdproxy_container_labels_additional_labels: ""
-
-tsdproxy_environment_variables_extension: ""
+# Additional environment variables.
+tsdproxy_environment_variables_additional_variables: ""
 
 # tsdproxy_restart_necessary controls whether the TSDProxy systemd
 # service will be restarted (when true) or merely started (when false) by the
