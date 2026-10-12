@@ -2,6 +2,6 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "description": "No //patch-automerge here: Molecule stops short of Tailscale node registration, which is what TSDProxy exists to do, so a green run does not prove that an update still proxies anything. See molecule/README.md.",
   "extends": [
-    "github>mother-of-all-self-hosting/renovate-config#v1.0.0"
+    "github>mother-of-all-self-hosting/renovate-config#v1.1.0"
   ]
 }

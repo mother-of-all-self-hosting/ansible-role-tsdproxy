@@ -6,14 +6,10 @@
 ---
 name: Autotag releases
 
-# `develop` is this repository's default branch, so it is where Renovate opens
-# its branches and where automerges land. The previous version of this workflow
-# watched `main`, which is six commits behind `develop` and no longer receives
-# them, so it never fired for anything that landed there.
 on:  # yamllint disable-line rule:truthy
   push:
     branches:
-      - develop
+      - main
   workflow_dispatch:
 
 permissions:
@@ -23,13 +19,6 @@ jobs:
   autotag:
     name: Autotag
     runs-on: ubuntu-latest
-
-    # Releases are cut in the repository this role is published from, and there
-    # only. A fork sees its own, incomplete set of tags, so it would compute a
-    # release number that is already taken upstream and attach it to different
-    # code. The `mother-of-all-self-hosting` fork, through which contributions
-    # to this role are staged, is exactly that case.
-    if: ${{ !github.event.repository.fork }}
 
     # Tag numbers are derived from the tags that already exist, so two commits
     # landing close together must not be looked at simultaneously - they would
