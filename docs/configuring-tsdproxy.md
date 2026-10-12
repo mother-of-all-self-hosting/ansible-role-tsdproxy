@@ -146,7 +146,7 @@ nas:
         - http://192.168.1.2:5000
 ```
 
-Note that the role renders its own `tsdproxy.yaml` into that same folder, because that is the only path TSDProxy reads its configuration from. Do not edit that file by hand - it is overwritten on every run. Use the role's variables, or `tsdproxy_configuration_extension_yaml`, instead.
+You can also use `tsdproxy_configuration_extension_yaml` to override individual variables from the default configuration.
 
 ### Access to the container socket
 
