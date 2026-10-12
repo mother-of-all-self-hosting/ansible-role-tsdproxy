@@ -82,7 +82,7 @@ Take a look at:
 
 - [`defaults/main.yml`](../defaults/main.yml) for some variables that you can customize via your `vars.yml` file. You can override settings (even those that don't have dedicated playbook variables) using the `tsdproxy_environment_variables_additional_variables` variable
 
-Refer to [the official documentation](https://www.tsdproxy.com/docs/configure#supported-environment-variables) for a complete list of TSDProxy's config options that you can put in `tsdproxy_environment_variables_additional_variables`.
+Refer to [the official documentation](https://almeidapaulopt.github.io/tsdproxy/docs/v3/advanced/environment-variables/) for a complete list of TSDProxy's config options that you can put in `tsdproxy_environment_variables_additional_variables`.
 
 ## Installing
 
