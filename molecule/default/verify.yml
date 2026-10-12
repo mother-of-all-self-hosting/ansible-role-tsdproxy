@@ -361,7 +361,7 @@
       vars:
         tsdproxy_molecule_container: "{{ (tsdproxy_container_raw.stdout | from_json)[0] }}"
         tsdproxy_molecule_expected_image: >-
-          {{ tsdproxy_defaults.tsdproxy_container_image_registry_prefix }}almeidapaulopt/tsdproxy:{{ tsdproxy_defaults.tsdproxy_version }}
+          {{ tsdproxy_defaults.tsdproxy_container_image_registry_prefix_upstream_default }}almeidapaulopt/tsdproxy:{{ tsdproxy_defaults.tsdproxy_version }}
         tsdproxy_molecule_socket_mounts: >-
           {{
             tsdproxy_molecule_container.HostConfig.Mounts
