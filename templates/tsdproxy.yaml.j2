@@ -21,8 +21,8 @@ lists: {{ tsdproxy_config_lists | to_json }}
 tailscale:
   providers:
     default: # name of the provider
-      authKey: {{ tsdproxy_config_tailscale_providers_default_authkey | to_json }} # define authkey here
-      authKeyFile: {{ tsdproxy_config_tailscale_providers_default_authkeyfile | to_json }} # use this to load authkey from file. If this is defined, Authkey is ignored
+      authKey: {{ tsdproxy_config_tailscale_providers_default_authkey | to_json }} # define AuthKey here
+      authKeyFile: {{ tsdproxy_config_tailscale_providers_default_authkeyfile | to_json }} # use this to load AuthKey from file. If this is defined, Authkey is ignored
       clientId: {{ tsdproxy_config_tailscale_providers_default_clientid | to_json }} # OAuth client ID. If clientId and clientSecret are defined, authKey and authKeyFile are ignored
       clientSecret: {{ tsdproxy_config_tailscale_providers_default_clientsecret | to_json }} # OAuth client secret
       tags: {{ tsdproxy_config_tailscale_providers_default_tags | to_json }} # default tags for the nodes of this provider

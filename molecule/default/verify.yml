@@ -162,7 +162,7 @@
         # false in TSDProxy, so this line arriving as JSON can only be the result of
         # the `tsdproxy_configuration_extension_yaml` this scenario sets, merged
         # into the rendered configuration and honoured by the running process.
-        - name: Assert the configuration, the authkey file and the configuration extension reached TSDProxy
+        - name: Assert the configuration, the AuthKey file and the configuration extension reached TSDProxy
           ansible.builtin.assert:
             that: >-
               (tsdproxy_molecule_log_entries | selectattr('message', 'equalto', 'Log Settings') | list | length) == 1

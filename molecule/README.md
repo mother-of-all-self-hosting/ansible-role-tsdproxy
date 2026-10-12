@@ -39,15 +39,15 @@ pip3 install -r ./molecule/requirements.txt
 
 Read this before changing anything under `molecule/`.
 
-TSDProxy's entire purpose is to put a service on a [Tailscale](https://tailscale.com/) tailnet. Doing that for real needs a Tailscale pre-authentication key and a reachable control plane, neither of which CI can be given: an authkey is a credential that joins a network, and a test that used one would enrol throwaway machines into somebody's real tailnet on every run. So there is a hard ceiling on what this suite can assert, and it is worth being precise about where it sits.
+TSDProxy's entire purpose is to put a service on a [Tailscale](https://tailscale.com/) tailnet. Doing that for real needs a Tailscale pre-authentication key and a reachable control plane, neither of which CI can be given: an AuthKey is a credential that joins a network, and a test that used one would enrol throwaway machines into somebody's real tailnet on every run. So there is a hard ceiling on what this suite can assert, and it is worth being precise about where it sits.
 
 ### Where the ceiling is
 
-TSDProxy discovers a service by watching Docker for containers labelled `tsdproxy.enable=true`. Everything up to *registering the resulting node with the control plane* works without a tailnet: given a labelled container, TSDProxy finds it through the socket, auto-detects its target URL on the container network, creates the proxy and starts a `tsnet` server for it. Only the final step - authenticating to `controlUrl` with the authkey - needs the real thing.
+TSDProxy discovers a service by watching Docker for containers labelled `tsdproxy.enable=true`. Everything up to *registering the resulting node with the control plane* works without a tailnet: given a labelled container, TSDProxy finds it through the socket, auto-detects its target URL on the container network, creates the proxy and starts a `tsnet` server for it. Only the final step - authenticating to `controlUrl` with the AuthKey - needs the real thing.
 
-TSDProxy 1.x panicked at that last step when the authkey was unusable, so the suite used to leave labelled containers out altogether. TSDProxy 2.x fails it gracefully: the proxy's status becomes `Error` and the process carries on. **So the scenario now starts one labelled service** (`traefik/whoami`, on a network of its own, publishing no port) and asserts that TSDProxy discovered it and resolved its target to the service's address on the shared network. The proxy's status is shown in the summary, but not asserted on.
+TSDProxy 1.x panicked at that last step when the AuthKey was unusable, so the suite used to leave labelled containers out altogether. TSDProxy 2.x fails it gracefully: the proxy's status becomes `Error` and the process carries on. **So the scenario now starts one labelled service** (`traefik/whoami`, on a network of its own, publishing no port) and asserts that TSDProxy discovered it and resolved its target to the service's address on the shared network. The proxy's status is shown in the summary, but not asserted on.
 
-To keep that final step local, the scenario points `tsdproxy_config_tailscale_providers_default_controlurl` at a port nothing listens on, and sets `TS_NO_LOGS_NO_SUPPORT` so that the `tsnet` node does not upload its logs to `log.tailscale.com`. The fake authkey never leaves the machine.
+To keep that final step local, the scenario points `tsdproxy_config_tailscale_providers_default_controlurl` at a port nothing listens on, and sets `TS_NO_LOGS_NO_SUPPORT` so that the `tsnet` node does not upload its logs to `log.tailscale.com`. The fake AuthKey never leaves the machine.
 
 Wiring up a local [Headscale](https://headscale.net/) as the control plane would move the ceiling, at the cost of turning this into a two-application scenario. That has not been attempted.
 

@@ -97,7 +97,7 @@ provisioner:
         # The labelled service makes TSDProxy create a Tailscale node, and that
         # node has to authenticate somewhere. Nothing listens on the discard
         # port, so the attempt fails at once and locally, instead of sending a
-        # fake authkey to Tailscale's real control plane on every CI run.
+        # fake AuthKey to Tailscale's real control plane on every CI run.
         tsdproxy_config_tailscale_providers_default_controlurl: http://127.0.0.1:9
 
         # A service for TSDProxy to discover, started by prepare.yml on a network

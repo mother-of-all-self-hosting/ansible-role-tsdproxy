@@ -37,7 +37,7 @@
 # with it. That generated default is nearly identical to what this role renders,
 # which is why writing the file to `tsdproxy_data_path` (mounted at `/data`)
 # used to look like it worked: TSDProxy quietly ran on its own defaults and
-# every setting this role offers - the Tailscale authkey included - had no
+# every setting this role offers - the Tailscale AuthKey included - had no
 # effect at all.
 - name: Ensure TSDProxy configuration file installed
   ansible.builtin.copy:

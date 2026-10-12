@@ -34,13 +34,13 @@
     # World-readable on purpose: it is a fake key, and the point is that the
     # container's uid can read it once the bind mount lands, not that the file
     # is protected.
-    - name: Ensure the directory for the TSDProxy Molecule authkey file exists
+    - name: Ensure the directory for the TSDProxy Molecule AuthKey file exists
       ansible.builtin.file:
         path: "{{ tsdproxy_molecule_authkey_host_path | dirname }}"
         state: directory
         mode: "0755"
 
-    - name: Ensure the TSDProxy Molecule authkey file exists
+    - name: Ensure the TSDProxy Molecule AuthKey file exists
       ansible.builtin.copy:
         content: "tskey-auth-MOLECULEFAKE-notarealkey"
         dest: "{{ tsdproxy_molecule_authkey_host_path }}"
