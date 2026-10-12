@@ -94,6 +94,20 @@
     # The role's configuration file is the one TSDProxy actually read
     # ------------------------------------------------------------------
 
+    # This is the important one. TSDProxy loads `/config/tsdproxy.yaml`,
+    # and when it finds nothing there it *generates a default and runs with
+    # it*. That generated default is near-identical to this role's template
+    # - the template was originally copied from it - so a scenario using the
+    # role's own default values could not tell the two apart. Every value
+    # this scenario sets is therefore deliberately different from both the
+    # role default and TSDProxy's fallback.
+    # The verification asserts TSDProxy logged `loading configuration`
+    # for `/config/tsdproxy.yaml` and did *not* log `generating default
+    # configuration`, and then asserts on values that only the role's file
+    # could have supplied. Since TSDProxy 2.x rejects unknown (e.g. TSDProxy
+    # v1-style) keys and exits, getting that far also shows the rendered
+    # file is in the format TSDProxy expects.
+
     # TSDProxy logs "loading configuration" before it tries the file, and
     # "generating default configuration" only when it found nothing at
     # /config/tsdproxy.yaml and made one up - which is what happened for the
@@ -178,7 +192,6 @@
     # ------------------------------------------------------------------
     # TSDProxy really has the Docker socket, and it is read-only
     # ------------------------------------------------------------------
-
     # "Default Network found" is only logged after a successful network listing
     # through the mounted socket. Without access, TSDProxy logs
     # "Cannot connect to the Docker daemon" or "permission denied" instead.

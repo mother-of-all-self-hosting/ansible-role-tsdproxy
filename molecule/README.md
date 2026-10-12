@@ -53,22 +53,23 @@ Wiring up a local [Headscale](https://headscale.net/) as the control plane would
 
 ### What a green run does prove
 
-- **That the role's configuration file is the one TSDProxy reads, and that TSDProxy accepts it.** This is the important one. TSDProxy loads `/config/tsdproxy.yaml`, and when it finds nothing there it *generates a default and runs with it*. That generated default is near-identical to this role's template - the template was originally copied from it - so a scenario using the role's own default values could not tell the two apart. Every value this scenario sets is therefore deliberately different from both the role default and TSDProxy's fallback: log level `trace` rather than `info`, HTTP port `8099` rather than `8080`, `proxyAccessLog` false rather than true, `log.json` true rather than false. The verification asserts TSDProxy logged `loading configuration` for `/config/tsdproxy.yaml` and did *not* log `generating default configuration`, and then asserts on values that only the role's file could have supplied. Since TSDProxy 2.x rejects unknown (e.g. TSDProxy v1-style) keys and exits, getting that far also shows the rendered file is in the format TSDProxy expects.
-- **That `tsdproxy_container_http_port` reaches the process**, not just the `-p` flag: the readiness endpoint is probed on the published port, and nothing would answer there if TSDProxy were listening on its compiled-in 8080.
-- **That `tsdproxy_configuration_extension_yaml` survives into the running process.** The extension turns on JSON logging, which the role's template hardcodes to false; structured log lines cannot come from anywhere else.
-- **That `tsdproxy_container_additional_volumes` renders as a real `--mount`.** `tsdproxy_config_tailscale_providers_default_authkeyfile` points at a file that only exists inside the container because of one, and TSDProxy reads that file while loading its configuration and refuses to start when it cannot.
-- **That TSDProxy really has the Docker socket.** `Default Network found` is logged only after a successful network listing through the socket. Without access, TSDProxy logs `permission denied` - which is also why `tsdproxy_gid` is set to the gid that owns the socket rather than to anything convenient (see below).
-- **That TSDProxy can reach a service the way this role sets it up.** The labelled service is only reachable on its own network, which TSDProxy joins via `tsdproxy_container_additional_networks_custom`, and only found there because of the role's `tsdproxy_docker_try_internal_network` default. Without either, the proxy's target would not be the service's address on that network (TSDProxy's own default would target `targetHostname`, which the scenario sets to a dummy `10.99.0.7`).
-- **That the image's Docker `HEALTHCHECK` agrees**, on a port other than `8080`.
-- **That the running TSDProxy is the version `defaults/main.yml` pins**, taken from the `Starting server` log line of the live process and cross-checked against the image's `org.opencontainers.image.version` label.
-- **That the role's other plumbing lands**: the `--label-file` label, the `--env-file` variable, the container's uid:gid, the read-only Docker socket mount, and the removal of the stale configuration file that older versions of this role left in the data path (`prepare.yml` seeds one).
+Here is a synopsis of what a successful run proves. Check the scenario itself for details about what are exactly checked.
+
+- The role's configuration file is the one TSDProxy reads, and that TSDProxy accepts it.
+- `tsdproxy_container_http_port` reaches the process
+- `tsdproxy_configuration_extension_yaml` survives into the running process
+- `tsdproxy_container_additional_volumes` renders as a real `--mount`
+- TSDProxy really has the Docker socket
+- TSDProxy can reach a service the way this role sets it up
+- The image's Docker `HEALTHCHECK` agrees
+- The running TSDProxy is the version `defaults/main.yml` pins
+- The role's other plumbing lands
 
 ### Things worth knowing before editing
 
-- **`Restart=always` makes `systemctl is-active` nearly worthless here**, because TSDProxy exits on a configuration it rejects (an unknown key, an unreadable authkey or list file), and the resulting crash loop reports `active`. The verification asserts `NRestarts` is 0, records the systemd `InvocationID`, reads the journal scoped to *that invocation* (`journalctl _SYSTEMD_INVOCATION_ID=...`, not `--unit`, which would also return starts that have since been replaced), and re-checks at the end that the invocation has not changed.
-- **`tsdproxy_gid` must be the gid of the group that owns the Docker socket.** The socket is `root:docker` mode 0660 and the container runs as a non-root uid. `--privileged`, which the role passes, does *not* help: a non-root uid gets no effective capabilities from it, so `CAP_DAC_OVERRIDE` is not in play. This was checked directly - privileged with a non-`docker` gid is denied; unprivileged with the `docker` gid works.
-- **TSDProxy configures itself from its YAML file, not from the environment.** It has a `-config` flag defaulting to `/config/tsdproxy.yaml`, and reads a few legacy environment variables only while generating a default configuration, which never happens with this role. The `env` file this role writes is therefore inert as far as TSDProxy's own settings are concerned (the scenario asserts it reaches Docker); only the Tailscale library TSDProxy embeds reads `TS_*` variables from it.
-- **The image's built-in `HEALTHCHECK` has to wait for its 60-second interval** before it reports anything, which is why its assertion comes last. It probes the readiness endpoint on the port TSDProxy writes into `/data/.http-port`, so it works with any `tsdproxy_container_http_port`.
+- `tsdproxy_gid` must be the gid of the group that owns the Docker socket
+- TSDProxy configures itself from its YAML file, not from the environment
+- The image's built-in `HEALTHCHECK` has to wait for its 60-second interval before it reports anything
 
 ## Scenarios
 
