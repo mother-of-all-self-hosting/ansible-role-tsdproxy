@@ -16,462 +16,462 @@
   tasks:
     - name: Verify that TSDProxy works
       block:
-    # `tsdproxy_gid` derives from this; see molecule.yml.
-    - name: Look up the Docker group for TSDProxy verification
-      ansible.builtin.getent:
-        database: group
-        key: docker
+        # `tsdproxy_gid` derives from this; see molecule.yml.
+        - name: Look up the Docker group for TSDProxy verification
+          ansible.builtin.getent:
+            database: group
+            key: docker
 
-    # Role defaults are not in scope here, but the version Renovate bumps lives
-    # in them and is what the running TSDProxy is checked against below.
-    - name: Load the TSDProxy role defaults
-      ansible.builtin.include_vars:
-        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
-        name: tsdproxy_defaults
+        # Role defaults are not in scope here, but the version Renovate bumps lives
+        # in them and is what the running TSDProxy is checked against below.
+        - name: Load the TSDProxy role defaults
+          ansible.builtin.include_vars:
+            file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
+            name: tsdproxy_defaults
 
-    - name: Wait for the TSDProxy systemd service to become active (up to 180s)
-      ansible.builtin.systemd_service:
-        name: tsdproxy.service
-      register: tsdproxy_service
-      until: tsdproxy_service.status.ActiveState == 'active'
-      retries: 36
-      delay: 5
-      # So that giving up is reported by the assertion below rather than as a
-      # wall of systemd unit properties.
-      failed_when: false
+        - name: Wait for the TSDProxy systemd service to become active (up to 180s)
+          ansible.builtin.systemd_service:
+            name: tsdproxy.service
+          register: tsdproxy_service
+          until: tsdproxy_service.status.ActiveState == 'active'
+          retries: 36
+          delay: 5
+          # So that giving up is reported by the assertion below rather than as a
+          # wall of systemd unit properties.
+          failed_when: false
 
-    # `Restart=always` in the systemd unit means that even a container which crashes
-    # and gets restarted reads as active here, so this is a precondition rather than
-    # a result.
-    # this asserts on the restart counter as well. TSDProxy exits when it
-    # rejects its configuration file or cannot read the authkey file it names,
-    # which are the failure modes this is here to catch.
-    - name: Assert the TSDProxy systemd service is active and has not restarted
-      ansible.builtin.assert:
-        that:
-          - tsdproxy_service.status.ActiveState == 'active'
-          - tsdproxy_service.status.SubState == 'running'
-          - (tsdproxy_service.status.NRestarts | int) == 0
-        fail_msg: >-
-          tsdproxy.service is {{ tsdproxy_service.status.ActiveState }}/{{ tsdproxy_service.status.SubState }}
-          after {{ tsdproxy_service.status.NRestarts }} restart(s)
-        success_msg: "tsdproxy.service is active and running on its first start"
+        # `Restart=always` in the systemd unit means that even a container which crashes
+        # and gets restarted reads as active here, so this is a precondition rather than
+        # a result.
+        # this asserts on the restart counter as well. TSDProxy exits when it
+        # rejects its configuration file or cannot read the authkey file it names,
+        # which are the failure modes this is here to catch.
+        - name: Assert the TSDProxy systemd service is active and has not restarted
+          ansible.builtin.assert:
+            that:
+              - tsdproxy_service.status.ActiveState == 'active'
+              - tsdproxy_service.status.SubState == 'running'
+              - (tsdproxy_service.status.NRestarts | int) == 0
+            fail_msg: >-
+              tsdproxy.service is {{ tsdproxy_service.status.ActiveState }}/{{ tsdproxy_service.status.SubState }}
+              after {{ tsdproxy_service.status.NRestarts }} restart(s)
+            success_msg: "tsdproxy.service is active and running on its first start"
 
-    - name: Retrieve the TSDProxy systemd service log for debugging
-      when: tsdproxy_debug_service_enabled | bool
-      ansible.builtin.command:
-        cmd: journalctl -xeu tsdproxy.service
-      changed_when: false
+        - name: Retrieve the TSDProxy systemd service log for debugging
+          when: tsdproxy_debug_service_enabled | bool
+          ansible.builtin.command:
+            cmd: journalctl -xeu tsdproxy.service
+          changed_when: false
 
-    - name: Record the TSDProxy systemd invocation under test
-      ansible.builtin.set_fact:
-        tsdproxy_molecule_invocation_id: "{{ tsdproxy_service.status.InvocationID }}"
+        - name: Record the TSDProxy systemd invocation under test
+          ansible.builtin.set_fact:
+            tsdproxy_molecule_invocation_id: "{{ tsdproxy_service.status.InvocationID }}"
 
-    # Scoped to one invocation on purpose: `journalctl --unit tsdproxy.service`
-    # would also return the output of starts that have since been replaced, so
-    # an assertion could be satisfied by a run that is no longer the live one.
-    - name: Wait for the TSDProxy startup log of this invocation (up to 120s)
-      ansible.builtin.command:
-        argv:
-          - journalctl
-          - "_SYSTEMD_INVOCATION_ID={{ tsdproxy_molecule_invocation_id }}"
-          - --no-pager
-          - --output=cat
-      register: tsdproxy_journal
-      changed_when: false
-      failed_when: false
-      until: "'Default Network found' in tsdproxy_journal.stdout"
-      retries: 24
-      delay: 5
+        # Scoped to one invocation on purpose: `journalctl --unit tsdproxy.service`
+        # would also return the output of starts that have since been replaced, so
+        # an assertion could be satisfied by a run that is no longer the live one.
+        - name: Wait for the TSDProxy startup log of this invocation (up to 120s)
+          ansible.builtin.command:
+            argv:
+              - journalctl
+              - "_SYSTEMD_INVOCATION_ID={{ tsdproxy_molecule_invocation_id }}"
+              - --no-pager
+              - --output=cat
+          register: tsdproxy_journal
+          changed_when: false
+          failed_when: false
+          until: "'Default Network found' in tsdproxy_journal.stdout"
+          retries: 24
+          delay: 5
 
-    - name: Collect the JSON log lines TSDProxy emitted
-      ansible.builtin.set_fact:
-        tsdproxy_molecule_log_entries: >-
-          {{
-            tsdproxy_journal.stdout_lines
-            | select('match', '^\{.*\}$')
-            | map('from_json')
-            | list
-          }}
+        - name: Collect the JSON log lines TSDProxy emitted
+          ansible.builtin.set_fact:
+            tsdproxy_molecule_log_entries: >-
+              {{
+                tsdproxy_journal.stdout_lines
+                | select('match', '^\{.*\}$')
+                | map('from_json')
+                | list
+              }}
 
-    # ------------------------------------------------------------------
-    # The role's configuration file is the one TSDProxy actually read
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # The role's configuration file is the one TSDProxy actually read
+        # ------------------------------------------------------------------
 
-    # This is the important one. TSDProxy loads `/config/tsdproxy.yaml`,
-    # and when it finds nothing there it *generates a default and runs with
-    # it*. That generated default is near-identical to this role's template
-    # - the template was originally copied from it - so a scenario using the
-    # role's own default values could not tell the two apart. Every value
-    # this scenario sets is therefore deliberately different from both the
-    # role default and TSDProxy's fallback.
-    # The verification asserts TSDProxy logged `loading configuration`
-    # for `/config/tsdproxy.yaml` and did *not* log `generating default
-    # configuration`, and then asserts on values that only the role's file
-    # could have supplied. Since TSDProxy 2.x rejects unknown (e.g. TSDProxy
-    # v1-style) keys and exits, getting that far also shows the rendered
-    # file is in the format TSDProxy expects.
+        # This is the important one. TSDProxy loads `/config/tsdproxy.yaml`,
+        # and when it finds nothing there it *generates a default and runs with
+        # it*. That generated default is near-identical to this role's template
+        # - the template was originally copied from it - so a scenario using the
+        # role's own default values could not tell the two apart. Every value
+        # this scenario sets is therefore deliberately different from both the
+        # role default and TSDProxy's fallback.
+        # The verification asserts TSDProxy logged `loading configuration`
+        # for `/config/tsdproxy.yaml` and did *not* log `generating default
+        # configuration`, and then asserts on values that only the role's file
+        # could have supplied. Since TSDProxy 2.x rejects unknown (e.g. TSDProxy
+        # v1-style) keys and exits, getting that far also shows the rendered
+        # file is in the format TSDProxy expects.
 
-    # TSDProxy logs "loading configuration" before it tries the file, and
-    # "generating default configuration" only when it found nothing at
-    # /config/tsdproxy.yaml and made one up - which is what happened for the
-    # whole time the role wrote its configuration to the data path instead, and
-    # what made that bug invisible. Both lines are logged as JSON whatever the
-    # configuration says, because they come before TSDProxy sets up its logger.
-    - name: Assert TSDProxy loaded a configuration file rather than generating one
-      vars:
-        tsdproxy_molecule_loading_entries: >-
-          {{
-            tsdproxy_molecule_log_entries
-            | selectattr('message', 'equalto', 'loading configuration')
-            | list
-          }}
-      ansible.builtin.assert:
-        that:
-          - (tsdproxy_molecule_loading_entries | length) == 1
-          - tsdproxy_molecule_loading_entries[0].file == '/config/tsdproxy.yaml'
-          - "'generating default configuration' not in (tsdproxy_journal.stdout | lower)"
-        fail_msg: "TSDProxy did not load the role's configuration file"
-        success_msg: "TSDProxy loaded /config/tsdproxy.yaml instead of generating its own"
+        # TSDProxy logs "loading configuration" before it tries the file, and
+        # "generating default configuration" only when it found nothing at
+        # /config/tsdproxy.yaml and made one up - which is what happened for the
+        # whole time the role wrote its configuration to the data path instead, and
+        # what made that bug invisible. Both lines are logged as JSON whatever the
+        # configuration says, because they come before TSDProxy sets up its logger.
+        - name: Assert TSDProxy loaded a configuration file rather than generating one
+          vars:
+            tsdproxy_molecule_loading_entries: >-
+              {{
+                tsdproxy_molecule_log_entries
+                | selectattr('message', 'equalto', 'loading configuration')
+                | list
+              }}
+          ansible.builtin.assert:
+            that:
+              - (tsdproxy_molecule_loading_entries | length) == 1
+              - tsdproxy_molecule_loading_entries[0].file == '/config/tsdproxy.yaml'
+              - "'generating default configuration' not in (tsdproxy_journal.stdout | lower)"
+            fail_msg: "TSDProxy did not load the role's configuration file"
+            success_msg: "TSDProxy loaded /config/tsdproxy.yaml instead of generating its own"
 
-    # "Log Settings" is logged once TSDProxy has accepted its configuration,
-    # and its JSON form carries the evidence for the assertions below.
-    #
-    # TSDProxy reads `tailscale.providers.default.authKeyFile` while loading its
-    # configuration and exits when the file is unreadable, and it rejects
-    # unknown (e.g. TSDProxy v1-style) keys the same way. Getting this far
-    # therefore means the configuration is acceptable to it, and that the bind
-    # mount `tsdproxy_container_additional_volumes` asked for is really there.
-    #
-    # `log.json` is hardcoded to false in the role's template and defaults to
-    # false in TSDProxy, so this line arriving as JSON can only be the result of
-    # the `tsdproxy_configuration_extension_yaml` this scenario sets, merged
-    # into the rendered configuration and honoured by the running process.
-    - name: Assert the configuration, the authkey file and the configuration extension reached TSDProxy
-      ansible.builtin.assert:
-        that: >-
-          (tsdproxy_molecule_log_entries | selectattr('message', 'equalto', 'Log Settings') | list | length) == 1
-        fail_msg: >-
-          TSDProxy did not log its settings in JSON - it rejected its configuration, could not read
-          {{ tsdproxy_molecule_authkey_container_path }}, or never received log.json: true
-        success_msg: "TSDProxy accepted its configuration and logs in JSON, as tsdproxy_configuration_extension_yaml asked"
+        # "Log Settings" is logged once TSDProxy has accepted its configuration,
+        # and its JSON form carries the evidence for the assertions below.
+        #
+        # TSDProxy reads `tailscale.providers.default.authKeyFile` while loading its
+        # configuration and exits when the file is unreadable, and it rejects
+        # unknown (e.g. TSDProxy v1-style) keys the same way. Getting this far
+        # therefore means the configuration is acceptable to it, and that the bind
+        # mount `tsdproxy_container_additional_volumes` asked for is really there.
+        #
+        # `log.json` is hardcoded to false in the role's template and defaults to
+        # false in TSDProxy, so this line arriving as JSON can only be the result of
+        # the `tsdproxy_configuration_extension_yaml` this scenario sets, merged
+        # into the rendered configuration and honoured by the running process.
+        - name: Assert the configuration, the authkey file and the configuration extension reached TSDProxy
+          ansible.builtin.assert:
+            that: >-
+              (tsdproxy_molecule_log_entries | selectattr('message', 'equalto', 'Log Settings') | list | length) == 1
+            fail_msg: >-
+              TSDProxy did not log its settings in JSON - it rejected its configuration, could not read
+              {{ tsdproxy_molecule_authkey_container_path }}, or never received log.json: true
+            success_msg: "TSDProxy accepted its configuration and logs in JSON, as tsdproxy_configuration_extension_yaml asked"
 
-    - name: Assert the running TSDProxy uses the configured log level
-      vars:
-        tsdproxy_molecule_log_settings: >-
-          {{
-            tsdproxy_molecule_log_entries
-            | selectattr('message', 'equalto', 'Log Settings')
-            | first
-          }}
-      ansible.builtin.assert:
-        that: tsdproxy_molecule_log_settings['Log level'] == tsdproxy_config_log_level
-        fail_msg: >-
-          TSDProxy reports log level {{ tsdproxy_molecule_log_settings['Log level'] }},
-          expected {{ tsdproxy_config_log_level }}
-        success_msg: "TSDProxy runs at log level {{ tsdproxy_config_log_level }}"
+        - name: Assert the running TSDProxy uses the configured log level
+          vars:
+            tsdproxy_molecule_log_settings: >-
+              {{
+                tsdproxy_molecule_log_entries
+                | selectattr('message', 'equalto', 'Log Settings')
+                | first
+              }}
+          ansible.builtin.assert:
+            that: tsdproxy_molecule_log_settings['Log level'] == tsdproxy_config_log_level
+            fail_msg: >-
+              TSDProxy reports log level {{ tsdproxy_molecule_log_settings['Log level'] }},
+              expected {{ tsdproxy_config_log_level }}
+            success_msg: "TSDProxy runs at log level {{ tsdproxy_config_log_level }}"
 
-    # ------------------------------------------------------------------
-    # The running version is the one Renovate bumps
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # The running version is the one Renovate bumps
+        # ------------------------------------------------------------------
 
-    - name: Assert the running TSDProxy is the version this role installs
-      vars:
-        tsdproxy_molecule_reported_version: >-
-          {{
-            (tsdproxy_molecule_log_entries
-             | selectattr('message', 'equalto', 'Starting server')
-             | first).Version
-          }}
-      ansible.builtin.assert:
-        that: >-
-          (tsdproxy_molecule_reported_version + '.').startswith(
-            (tsdproxy_defaults.tsdproxy_version | string) + '.'
-          )
-        fail_msg: >-
-          TSDProxy reports {{ tsdproxy_molecule_reported_version }},
-          expected {{ tsdproxy_defaults.tsdproxy_version }}
-        success_msg: "TSDProxy reports version {{ tsdproxy_molecule_reported_version }}"
+        - name: Assert the running TSDProxy is the version this role installs
+          vars:
+            tsdproxy_molecule_reported_version: >-
+              {{
+                (tsdproxy_molecule_log_entries
+                 | selectattr('message', 'equalto', 'Starting server')
+                 | first).Version
+              }}
+          ansible.builtin.assert:
+            that: >-
+              (tsdproxy_molecule_reported_version + '.').startswith(
+                (tsdproxy_defaults.tsdproxy_version | string) + '.'
+              )
+            fail_msg: >-
+              TSDProxy reports {{ tsdproxy_molecule_reported_version }},
+              expected {{ tsdproxy_defaults.tsdproxy_version }}
+            success_msg: "TSDProxy reports version {{ tsdproxy_molecule_reported_version }}"
 
-    # ------------------------------------------------------------------
-    # TSDProxy really has the Docker socket, and it is read-only
-    # ------------------------------------------------------------------
-    # "Default Network found" is only logged after a successful network listing
-    # through the mounted socket. Without access, TSDProxy logs
-    # "Cannot connect to the Docker daemon" or "permission denied" instead.
-    - name: Assert TSDProxy reached the Docker daemon through the mounted socket
-      vars:
-        tsdproxy_molecule_docker_entry: >-
-          {{
-            tsdproxy_molecule_log_entries
-            | selectattr('message', 'equalto', 'Default Network found')
-            | first
-          }}
-      ansible.builtin.assert:
-        that:
-          - tsdproxy_molecule_docker_entry.docker == 'local'
-          - "'Cannot connect to the Docker daemon' not in tsdproxy_journal.stdout"
-          - "'permission denied' not in tsdproxy_journal.stdout"
-        fail_msg: "TSDProxy did not enumerate Docker networks over the socket"
-        success_msg: "TSDProxy enumerated Docker networks over the mounted socket"
+        # ------------------------------------------------------------------
+        # TSDProxy really has the Docker socket, and it is read-only
+        # ------------------------------------------------------------------
+        # "Default Network found" is only logged after a successful network listing
+        # through the mounted socket. Without access, TSDProxy logs
+        # "Cannot connect to the Docker daemon" or "permission denied" instead.
+        - name: Assert TSDProxy reached the Docker daemon through the mounted socket
+          vars:
+            tsdproxy_molecule_docker_entry: >-
+              {{
+                tsdproxy_molecule_log_entries
+                | selectattr('message', 'equalto', 'Default Network found')
+                | first
+              }}
+          ansible.builtin.assert:
+            that:
+              - tsdproxy_molecule_docker_entry.docker == 'local'
+              - "'Cannot connect to the Docker daemon' not in tsdproxy_journal.stdout"
+              - "'permission denied' not in tsdproxy_journal.stdout"
+            fail_msg: "TSDProxy did not enumerate Docker networks over the socket"
+            success_msg: "TSDProxy enumerated Docker networks over the mounted socket"
 
-    # ------------------------------------------------------------------
-    # TSDProxy's own HTTP surface, on the port the role rendered
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # TSDProxy's own HTTP surface, on the port the role rendered
+        # ------------------------------------------------------------------
 
-    # Nothing would answer on this port if `tsdproxy_container_http_port` had
-    # not reached the configuration file: TSDProxy would be listening on its
-    # own default of 8080 inside the container, and the published port would
-    # refuse the connection.
-    - name: Wait for the TSDProxy readiness endpoint (up to 120s)
-      ansible.builtin.uri:
-        url: "{{ tsdproxy_molecule_base_url }}/health/ready/"
-        method: GET
-        return_content: true
-      register: tsdproxy_ready
-      until: tsdproxy_ready.status == 200
-      retries: 24
-      delay: 5
-      failed_when: false
+        # Nothing would answer on this port if `tsdproxy_container_http_port` had
+        # not reached the configuration file: TSDProxy would be listening on its
+        # own default of 8080 inside the container, and the published port would
+        # refuse the connection.
+        - name: Wait for the TSDProxy readiness endpoint (up to 120s)
+          ansible.builtin.uri:
+            url: "{{ tsdproxy_molecule_base_url }}/health/ready/"
+            method: GET
+            return_content: true
+          register: tsdproxy_ready
+          until: tsdproxy_ready.status == 200
+          retries: 24
+          delay: 5
+          failed_when: false
 
-    - name: Assert TSDProxy reports itself ready on the configured port
-      ansible.builtin.assert:
-        that:
-          - tsdproxy_ready.status == 200
-          - (tsdproxy_ready.content | from_json).status == 'OK'
-        fail_msg: >-
-          TSDProxy did not report ready on port {{ tsdproxy_container_http_port }}
-          (published as {{ tsdproxy_molecule_http_host_bind_port }}): {{ tsdproxy_ready.content | default('') }}
-        success_msg: "TSDProxy reports ready on port {{ tsdproxy_container_http_port }}"
+        - name: Assert TSDProxy reports itself ready on the configured port
+          ansible.builtin.assert:
+            that:
+              - tsdproxy_ready.status == 200
+              - (tsdproxy_ready.content | from_json).status == 'OK'
+            fail_msg: >-
+              TSDProxy did not report ready on port {{ tsdproxy_container_http_port }}
+              (published as {{ tsdproxy_molecule_http_host_bind_port }}): {{ tsdproxy_ready.content | default('') }}
+            success_msg: "TSDProxy reports ready on port {{ tsdproxy_container_http_port }}"
 
-    # The dashboard and the API require authentication, except for requests
-    # from loopback and private addresses, which TSDProxy always lets through
-    # when it runs in a container (`adminAllowLocalhost`). This request arrives
-    # through the published port, i.e. from the Docker network's gateway.
-    - name: Query the TSDProxy dashboard
-      ansible.builtin.uri:
-        url: "{{ tsdproxy_molecule_base_url }}/"
-        method: GET
-        return_content: true
-      register: tsdproxy_dashboard
+        # The dashboard and the API require authentication, except for requests
+        # from loopback and private addresses, which TSDProxy always lets through
+        # when it runs in a container (`adminAllowLocalhost`). This request arrives
+        # through the published port, i.e. from the Docker network's gateway.
+        - name: Query the TSDProxy dashboard
+          ansible.builtin.uri:
+            url: "{{ tsdproxy_molecule_base_url }}/"
+            method: GET
+            return_content: true
+          register: tsdproxy_dashboard
 
-    - name: Assert the TSDProxy dashboard is served
-      ansible.builtin.assert:
-        that:
-          - tsdproxy_dashboard.status == 200
-          - "'proxy-list' in tsdproxy_dashboard.content"
-        fail_msg: "The TSDProxy dashboard was not served: HTTP {{ tsdproxy_dashboard.status }}"
-        success_msg: "The TSDProxy dashboard is served"
+        - name: Assert the TSDProxy dashboard is served
+          ansible.builtin.assert:
+            that:
+              - tsdproxy_dashboard.status == 200
+              - "'proxy-list' in tsdproxy_dashboard.content"
+            fail_msg: "The TSDProxy dashboard was not served: HTTP {{ tsdproxy_dashboard.status }}"
+            success_msg: "The TSDProxy dashboard is served"
 
-    # ------------------------------------------------------------------
-    # TSDProxy found the labelled service and can reach it
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # TSDProxy found the labelled service and can reach it
+        # ------------------------------------------------------------------
 
-    - name: Inspect the TSDProxy Molecule service container
-      ansible.builtin.command:
-        argv:
-          - docker
-          - container
-          - inspect
-          - "{{ tsdproxy_molecule_service_container }}"
-      register: tsdproxy_molecule_service_raw
-      changed_when: false
+        - name: Inspect the TSDProxy Molecule service container
+          ansible.builtin.command:
+            argv:
+              - docker
+              - container
+              - inspect
+              - "{{ tsdproxy_molecule_service_container }}"
+          register: tsdproxy_molecule_service_raw
+          changed_when: false
 
-    # The service is on its own network and publishes nothing, so its address
-    # on that network is the only target that works. TSDProxy picks it only if
-    # it shares the network (tsdproxy_container_additional_networks_custom)
-    # and probes it there (tsdproxy_docker_try_internal_network). Otherwise it
-    # would target `targetHostname` - 10.99.0.7 in this scenario.
-    #
-    # Registering the proxy's Tailscale node is where this stops: there is no
-    # control plane to register with (see molecule/README.md), so the proxy's
-    # status is expected to be an error.
-    - name: Wait for TSDProxy to set up a proxy for the labelled service (up to 120s)
-      ansible.builtin.uri:
-        url: "{{ tsdproxy_molecule_base_url }}/api/v1/proxies/{{ tsdproxy_molecule_service_proxy_name }}"
-        method: GET
-        return_content: true
-        status_code: [200, 404]
-      register: tsdproxy_molecule_service_proxy
-      until: >-
-        tsdproxy_molecule_service_proxy.status == 200
-        and (tsdproxy_molecule_service_proxy.json.ports | default([]) | length) > 0
-        and (tsdproxy_molecule_service_proxy.json.ports[0].targetUrl | default('')) != ''
-      retries: 24
-      delay: 5
-      failed_when: false
+        # The service is on its own network and publishes nothing, so its address
+        # on that network is the only target that works. TSDProxy picks it only if
+        # it shares the network (tsdproxy_container_additional_networks_custom)
+        # and probes it there (tsdproxy_docker_try_internal_network). Otherwise it
+        # would target `targetHostname` - 10.99.0.7 in this scenario.
+        #
+        # Registering the proxy's Tailscale node is where this stops: there is no
+        # control plane to register with (see molecule/README.md), so the proxy's
+        # status is expected to be an error.
+        - name: Wait for TSDProxy to set up a proxy for the labelled service (up to 120s)
+          ansible.builtin.uri:
+            url: "{{ tsdproxy_molecule_base_url }}/api/v1/proxies/{{ tsdproxy_molecule_service_proxy_name }}"
+            method: GET
+            return_content: true
+            status_code: [200, 404]
+          register: tsdproxy_molecule_service_proxy
+          until: >-
+            tsdproxy_molecule_service_proxy.status == 200
+            and (tsdproxy_molecule_service_proxy.json.ports | default([]) | length) > 0
+            and (tsdproxy_molecule_service_proxy.json.ports[0].targetUrl | default('')) != ''
+          retries: 24
+          delay: 5
+          failed_when: false
 
-    - name: Assert TSDProxy targets the labelled service over the shared network
-      vars:
-        tsdproxy_molecule_service_ip: >-
-          {{ (tsdproxy_molecule_service_raw.stdout | from_json)[0].NetworkSettings.Networks[tsdproxy_molecule_service_network].IPAddress }}
-        tsdproxy_molecule_service_proxy_ports: "{{ tsdproxy_molecule_service_proxy.json.ports | default([]) }}"
-      ansible.builtin.assert:
-        that:
-          - tsdproxy_molecule_service_proxy.status == 200
-          - tsdproxy_molecule_service_proxy.json.targetProvider == 'local'
-          - (tsdproxy_molecule_service_proxy_ports | length) == 1
-          - tsdproxy_molecule_service_proxy_ports[0].proxyPort == 443
-          - tsdproxy_molecule_service_proxy_ports[0].proxyProtocol == 'https'
-          - tsdproxy_molecule_service_proxy_ports[0].targetUrl == 'http://' + tsdproxy_molecule_service_ip + ':80'
-        fail_msg: >-
-          TSDProxy did not target {{ tsdproxy_molecule_service_container }} at
-          http://{{ tsdproxy_molecule_service_ip }}:80: {{ tsdproxy_molecule_service_proxy.content | default('') }}
-        success_msg: "TSDProxy targets the labelled service at http://{{ tsdproxy_molecule_service_ip }}:80"
+        - name: Assert TSDProxy targets the labelled service over the shared network
+          vars:
+            tsdproxy_molecule_service_ip: >-
+              {{ (tsdproxy_molecule_service_raw.stdout | from_json)[0].NetworkSettings.Networks[tsdproxy_molecule_service_network].IPAddress }}
+            tsdproxy_molecule_service_proxy_ports: "{{ tsdproxy_molecule_service_proxy.json.ports | default([]) }}"
+          ansible.builtin.assert:
+            that:
+              - tsdproxy_molecule_service_proxy.status == 200
+              - tsdproxy_molecule_service_proxy.json.targetProvider == 'local'
+              - (tsdproxy_molecule_service_proxy_ports | length) == 1
+              - tsdproxy_molecule_service_proxy_ports[0].proxyPort == 443
+              - tsdproxy_molecule_service_proxy_ports[0].proxyProtocol == 'https'
+              - tsdproxy_molecule_service_proxy_ports[0].targetUrl == 'http://' + tsdproxy_molecule_service_ip + ':80'
+            fail_msg: >-
+              TSDProxy did not target {{ tsdproxy_molecule_service_container }} at
+              http://{{ tsdproxy_molecule_service_ip }}:80: {{ tsdproxy_molecule_service_proxy.content | default('') }}
+            success_msg: "TSDProxy targets the labelled service at http://{{ tsdproxy_molecule_service_ip }}:80"
 
-    # ------------------------------------------------------------------
-    # What the role put on disk
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # What the role put on disk
+        # ------------------------------------------------------------------
 
-    - name: Read the rendered TSDProxy configuration file
-      ansible.builtin.slurp:
-        src: "{{ tsdproxy_molecule_config_file_path }}"
-      register: tsdproxy_config_file
+        - name: Read the rendered TSDProxy configuration file
+          ansible.builtin.slurp:
+            src: "{{ tsdproxy_molecule_config_file_path }}"
+          register: tsdproxy_config_file
 
-    - name: Assert the rendered TSDProxy configuration carries the scenario's values
-      vars:
-        tsdproxy_molecule_config: "{{ tsdproxy_config_file.content | b64decode | from_yaml }}"
-      ansible.builtin.assert:
-        that:
-          - (tsdproxy_molecule_config.http.port | int) == (tsdproxy_container_http_port | int)
-          - tsdproxy_molecule_config.log.level == tsdproxy_config_log_level
-          - tsdproxy_molecule_config.log.json | bool
-          - tsdproxy_molecule_config.proxyAccessLog is false
-          - tsdproxy_molecule_config.tailscale.providers.default.authKeyFile == tsdproxy_molecule_authkey_container_path
-          - tsdproxy_molecule_config.tailscale.providers.default.controlUrl == tsdproxy_config_tailscale_providers_default_controlurl
-          - tsdproxy_molecule_config.docker.local.targetHostname == '10.99.0.7'
-          # Not tuned by this scenario, so read from the role's own defaults.
-          - tsdproxy_molecule_config.docker.local.host == tsdproxy_defaults.tsdproxy_docker_endpoint
-          - tsdproxy_molecule_config.docker.local.tryDockerInternalNetwork is true
-          - tsdproxy_molecule_config.lists == {}
-        fail_msg: "The rendered configuration does not match the scenario's variables"
-        success_msg: "The rendered configuration matches the scenario's variables"
+        - name: Assert the rendered TSDProxy configuration carries the scenario's values
+          vars:
+            tsdproxy_molecule_config: "{{ tsdproxy_config_file.content | b64decode | from_yaml }}"
+          ansible.builtin.assert:
+            that:
+              - (tsdproxy_molecule_config.http.port | int) == (tsdproxy_container_http_port | int)
+              - tsdproxy_molecule_config.log.level == tsdproxy_config_log_level
+              - tsdproxy_molecule_config.log.json | bool
+              - tsdproxy_molecule_config.proxyAccessLog is false
+              - tsdproxy_molecule_config.tailscale.providers.default.authKeyFile == tsdproxy_molecule_authkey_container_path
+              - tsdproxy_molecule_config.tailscale.providers.default.controlUrl == tsdproxy_config_tailscale_providers_default_controlurl
+              - tsdproxy_molecule_config.docker.local.targetHostname == '10.99.0.7'
+              # Not tuned by this scenario, so read from the role's own defaults.
+              - tsdproxy_molecule_config.docker.local.host == tsdproxy_defaults.tsdproxy_docker_endpoint
+              - tsdproxy_molecule_config.docker.local.tryDockerInternalNetwork is true
+              - tsdproxy_molecule_config.lists == {}
+            fail_msg: "The rendered configuration does not match the scenario's variables"
+            success_msg: "The rendered configuration matches the scenario's variables"
 
-    - name: Stat the configuration file TSDProxy never reads
-      ansible.builtin.stat:
-        path: "{{ tsdproxy_molecule_stale_config_file_path }}"
-      register: tsdproxy_stale_config_file
+        - name: Stat the configuration file TSDProxy never reads
+          ansible.builtin.stat:
+            path: "{{ tsdproxy_molecule_stale_config_file_path }}"
+          register: tsdproxy_stale_config_file
 
-    # prepare.yml seeds a file here, the way an upgrade from an older version of
-    # this role would find one.
-    - name: Assert the stale configuration file in the data path was removed
-      ansible.builtin.assert:
-        that: not tsdproxy_stale_config_file.stat.exists
-        fail_msg: "{{ tsdproxy_molecule_stale_config_file_path }} is still there"
-        success_msg: "The stale configuration file in the data path is gone"
+        # prepare.yml seeds a file here, the way an upgrade from an older version of
+        # this role would find one.
+        - name: Assert the stale configuration file in the data path was removed
+          ansible.builtin.assert:
+            that: not tsdproxy_stale_config_file.stat.exists
+            fail_msg: "{{ tsdproxy_molecule_stale_config_file_path }} is still there"
+            success_msg: "The stale configuration file in the data path is gone"
 
-    # ------------------------------------------------------------------
-    # What the role asked Docker for
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # What the role asked Docker for
+        # ------------------------------------------------------------------
 
-    - name: Inspect the TSDProxy container
-      ansible.builtin.command:
-        argv:
-          - docker
-          - container
-          - inspect
-          - tsdproxy
-      register: tsdproxy_container_raw
-      changed_when: false
+        - name: Inspect the TSDProxy container
+          ansible.builtin.command:
+            argv:
+              - docker
+              - container
+              - inspect
+              - tsdproxy
+          register: tsdproxy_container_raw
+          changed_when: false
 
-    - name: Assert the TSDProxy container was created the way the role describes
-      vars:
-        tsdproxy_molecule_container: "{{ (tsdproxy_container_raw.stdout | from_json)[0] }}"
-        tsdproxy_molecule_expected_image: >-
-          {{ tsdproxy_defaults.tsdproxy_container_image_registry_prefix_upstream_default }}almeidapaulopt/tsdproxy:{{ tsdproxy_defaults.tsdproxy_version }}
-        tsdproxy_molecule_socket_mounts: >-
-          {{
-            tsdproxy_molecule_container.HostConfig.Mounts
-            | selectattr('Target', 'equalto', '/var/run/docker.sock')
-            | list
-          }}
-        tsdproxy_molecule_authkey_mounts: >-
-          {{
-            tsdproxy_molecule_container.HostConfig.Mounts
-            | selectattr('Target', 'equalto', tsdproxy_molecule_authkey_container_path)
-            | list
-          }}
-      ansible.builtin.assert:
-        that:
-          - tsdproxy_molecule_container.State.Running
-          - tsdproxy_molecule_container.Config.Image == tsdproxy_molecule_expected_image
-          # The image's own version label, an independent witness to the log line.
-          - tsdproxy_molecule_container.Config.Labels['org.opencontainers.image.version'] == tsdproxy_defaults.tsdproxy_version | string
-          # From templates/labels.j2, handed over with --label-file.
-          - tsdproxy_molecule_container.Config.Labels['com.molecule.tsdproxy.marker'] == 'hello-from-molecule'
-          # From templates/env.j2, handed over with --env-file.
-          - ('TSDPROXY_MOLECULE_MARKER=' + tsdproxy_molecule_env_marker) in tsdproxy_molecule_container.Config.Env
-          - tsdproxy_molecule_container.Config.User == (tsdproxy_uid | string) + ':' + (tsdproxy_gid | string)
-          # tsdproxy_container_additional_volumes is rendered as a real --mount.
-          # `ReadOnly` is omitted altogether for a read-write mount, hence the
-          # default - without it a read-write mount raises instead of failing.
-          - (tsdproxy_molecule_authkey_mounts | length) == 1
-          - tsdproxy_molecule_authkey_mounts[0].Source == tsdproxy_molecule_authkey_host_path
-          - tsdproxy_molecule_authkey_mounts[0].ReadOnly | default(false)
-          # The Docker socket is handed over read-only. Note that this only
-          # blocks writes to the socket inode, not write calls made through it.
-          - (tsdproxy_molecule_socket_mounts | length) == 1
-          - tsdproxy_molecule_socket_mounts[0].ReadOnly | default(false)
-          # The port publishing branch that used to fail on an undefined variable.
-          - (tsdproxy_container_http_port | string) + '/tcp' in tsdproxy_molecule_container.HostConfig.PortBindings
-          # What tsdproxy_docker_target_hostname points at by default.
-          - "'host.docker.internal:host-gateway' in tsdproxy_molecule_container.HostConfig.ExtraHosts"
-          # tsdproxy_container_additional_networks_custom, connected by the systemd service.
-          - tsdproxy_molecule_service_network in tsdproxy_molecule_container.NetworkSettings.Networks
-        fail_msg: "The TSDProxy container was not created the way the role describes"
-        success_msg: "The TSDProxy container matches the role's description"
+        - name: Assert the TSDProxy container was created the way the role describes
+          vars:
+            tsdproxy_molecule_container: "{{ (tsdproxy_container_raw.stdout | from_json)[0] }}"
+            tsdproxy_molecule_expected_image: >-
+              {{ tsdproxy_defaults.tsdproxy_container_image_registry_prefix_upstream_default }}almeidapaulopt/tsdproxy:{{ tsdproxy_defaults.tsdproxy_version }}
+            tsdproxy_molecule_socket_mounts: >-
+              {{
+                tsdproxy_molecule_container.HostConfig.Mounts
+                | selectattr('Target', 'equalto', '/var/run/docker.sock')
+                | list
+              }}
+            tsdproxy_molecule_authkey_mounts: >-
+              {{
+                tsdproxy_molecule_container.HostConfig.Mounts
+                | selectattr('Target', 'equalto', tsdproxy_molecule_authkey_container_path)
+                | list
+              }}
+          ansible.builtin.assert:
+            that:
+              - tsdproxy_molecule_container.State.Running
+              - tsdproxy_molecule_container.Config.Image == tsdproxy_molecule_expected_image
+              # The image's own version label, an independent witness to the log line.
+              - tsdproxy_molecule_container.Config.Labels['org.opencontainers.image.version'] == tsdproxy_defaults.tsdproxy_version | string
+              # From templates/labels.j2, handed over with --label-file.
+              - tsdproxy_molecule_container.Config.Labels['com.molecule.tsdproxy.marker'] == 'hello-from-molecule'
+              # From templates/env.j2, handed over with --env-file.
+              - ('TSDPROXY_MOLECULE_MARKER=' + tsdproxy_molecule_env_marker) in tsdproxy_molecule_container.Config.Env
+              - tsdproxy_molecule_container.Config.User == (tsdproxy_uid | string) + ':' + (tsdproxy_gid | string)
+              # tsdproxy_container_additional_volumes is rendered as a real --mount.
+              # `ReadOnly` is omitted altogether for a read-write mount, hence the
+              # default - without it a read-write mount raises instead of failing.
+              - (tsdproxy_molecule_authkey_mounts | length) == 1
+              - tsdproxy_molecule_authkey_mounts[0].Source == tsdproxy_molecule_authkey_host_path
+              - tsdproxy_molecule_authkey_mounts[0].ReadOnly | default(false)
+              # The Docker socket is handed over read-only. Note that this only
+              # blocks writes to the socket inode, not write calls made through it.
+              - (tsdproxy_molecule_socket_mounts | length) == 1
+              - tsdproxy_molecule_socket_mounts[0].ReadOnly | default(false)
+              # The port publishing branch that used to fail on an undefined variable.
+              - (tsdproxy_container_http_port | string) + '/tcp' in tsdproxy_molecule_container.HostConfig.PortBindings
+              # What tsdproxy_docker_target_hostname points at by default.
+              - "'host.docker.internal:host-gateway' in tsdproxy_molecule_container.HostConfig.ExtraHosts"
+              # tsdproxy_container_additional_networks_custom, connected by the systemd service.
+              - tsdproxy_molecule_service_network in tsdproxy_molecule_container.NetworkSettings.Networks
+            fail_msg: "The TSDProxy container was not created the way the role describes"
+            success_msg: "The TSDProxy container matches the role's description"
 
-    # The image's built-in HEALTHCHECK probes the readiness endpoint on the port
-    # TSDProxy records in its data directory, so it has to agree with the
-    # readiness check above although tsdproxy_container_http_port is not 8080.
-    # The image runs the check every 60 seconds; the first result takes that long.
-    - name: Wait for Docker to report the TSDProxy container healthy (up to 180s)
-      ansible.builtin.command:
-        argv:
-          - docker
-          - container
-          - inspect
-          - --format={{ '{{' }}.State.Health.Status{{ '}}' }}
-          - tsdproxy
-      register: tsdproxy_molecule_health
-      changed_when: false
-      until: tsdproxy_molecule_health.stdout == 'healthy'
-      retries: 36
-      delay: 5
-      failed_when: false
+        # The image's built-in HEALTHCHECK probes the readiness endpoint on the port
+        # TSDProxy records in its data directory, so it has to agree with the
+        # readiness check above although tsdproxy_container_http_port is not 8080.
+        # The image runs the check every 60 seconds; the first result takes that long.
+        - name: Wait for Docker to report the TSDProxy container healthy (up to 180s)
+          ansible.builtin.command:
+            argv:
+              - docker
+              - container
+              - inspect
+              - --format={{ '{{' }}.State.Health.Status{{ '}}' }}
+              - tsdproxy
+          register: tsdproxy_molecule_health
+          changed_when: false
+          until: tsdproxy_molecule_health.stdout == 'healthy'
+          retries: 36
+          delay: 5
+          failed_when: false
 
-    - name: Assert Docker reports the TSDProxy container healthy
-      ansible.builtin.assert:
-        that: tsdproxy_molecule_health.stdout == 'healthy'
-        fail_msg: "Docker reports the TSDProxy container as {{ tsdproxy_molecule_health.stdout }}"
-        success_msg: "Docker reports the TSDProxy container healthy"
+        - name: Assert Docker reports the TSDProxy container healthy
+          ansible.builtin.assert:
+            that: tsdproxy_molecule_health.stdout == 'healthy'
+            fail_msg: "Docker reports the TSDProxy container as {{ tsdproxy_molecule_health.stdout }}"
+            success_msg: "Docker reports the TSDProxy container healthy"
 
-    # ------------------------------------------------------------------
-    # Still the same start, after all of the above
-    # ------------------------------------------------------------------
+        # ------------------------------------------------------------------
+        # Still the same start, after all of the above
+        # ------------------------------------------------------------------
 
-    - name: Re-read the TSDProxy service state
-      ansible.builtin.systemd:
-        name: tsdproxy.service
-      register: tsdproxy_service_after
+        - name: Re-read the TSDProxy service state
+          ansible.builtin.systemd:
+            name: tsdproxy.service
+          register: tsdproxy_service_after
 
-    - name: Assert TSDProxy has not restarted during verification
-      ansible.builtin.assert:
-        that:
-          - tsdproxy_service_after.status.InvocationID == tsdproxy_molecule_invocation_id
-          - (tsdproxy_service_after.status.NRestarts | int) == 0
-        fail_msg: "tsdproxy.service restarted while it was being verified"
-        success_msg: "tsdproxy.service is still serving its original start"
+        - name: Assert TSDProxy has not restarted during verification
+          ansible.builtin.assert:
+            that:
+              - tsdproxy_service_after.status.InvocationID == tsdproxy_molecule_invocation_id
+              - (tsdproxy_service_after.status.NRestarts | int) == 0
+            fail_msg: "tsdproxy.service restarted while it was being verified"
+            success_msg: "tsdproxy.service is still serving its original start"
 
-    - name: Show the TSDProxy verification summary
-      ansible.builtin.debug:
-        msg:
-          - "TSDProxy systemd: {{ tsdproxy_service_after.status.ActiveState }}, {{ tsdproxy_service_after.status.NRestarts }} restart(s)"
-          - "TSDProxy version: {{ (tsdproxy_molecule_log_entries | selectattr('message', 'equalto', 'Starting server') | first).Version }}"
-          - "TSDProxy readiness: HTTP {{ tsdproxy_ready.status }} {{ tsdproxy_ready.content }}"
-          - "TSDProxy log level: {{ (tsdproxy_molecule_log_entries | selectattr('message', 'equalto', 'Log Settings') | first)['Log level'] }}"
-          - "TSDProxy container health: {{ tsdproxy_molecule_health.stdout }}"
-          - "TSDProxy proxy for the labelled service: {{ tsdproxy_molecule_service_proxy.json.ports[0].targetUrl }}, status {{ tsdproxy_molecule_service_proxy.json.status }}"
+        - name: Show the TSDProxy verification summary
+          ansible.builtin.debug:
+            msg:
+              - "TSDProxy systemd: {{ tsdproxy_service_after.status.ActiveState }}, {{ tsdproxy_service_after.status.NRestarts }} restart(s)"
+              - "TSDProxy version: {{ (tsdproxy_molecule_log_entries | selectattr('message', 'equalto', 'Starting server') | first).Version }}"
+              - "TSDProxy readiness: HTTP {{ tsdproxy_ready.status }} {{ tsdproxy_ready.content }}"
+              - "TSDProxy log level: {{ (tsdproxy_molecule_log_entries | selectattr('message', 'equalto', 'Log Settings') | first)['Log level'] }}"
+              - "TSDProxy container health: {{ tsdproxy_molecule_health.stdout }}"
+              - "TSDProxy proxy for the labelled service: {{ tsdproxy_molecule_service_proxy.json.ports[0].targetUrl }}, status {{ tsdproxy_molecule_service_proxy.json.status }}"
 
       rescue:
         # Whatever went wrong, the reason is almost always in the systemd service log.
