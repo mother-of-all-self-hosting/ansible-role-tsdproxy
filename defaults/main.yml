@@ -18,7 +18,7 @@ tsdproxy_config_path: "{{ tsdproxy_base_path }}/config"
 tsdproxy_data_path: "{{ tsdproxy_base_path }}/data"
 
 # renovate: datasource=docker depName=almeidapaulopt/tsdproxy
-tsdproxy_version: 1.4.7
+tsdproxy_version: 2.3.4
 
 tsdproxy_uid: ""
 tsdproxy_gid: ""
