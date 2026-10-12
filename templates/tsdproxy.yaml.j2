@@ -9,24 +9,26 @@ SPDX-License-Identifier: AGPL-3.0-or-later
   and an unknown key - such as the all-lowercase keys of TSDProxy v1 - makes
   it refuse to start. Values are rendered with `to_json` (which is valid YAML)
   so that they cannot break the document.
+
+  cf. https://almeidapaulopt.github.io/tsdproxy/docs/serverconfig/
 #}
 defaultProxyProvider: default
 docker:
-  local: # name of the docker provider
-    host: {{ tsdproxy_docker_endpoint | to_json }} # host of the docker socket or daemon
-    targetHostname: {{ tsdproxy_docker_target_hostname | to_json }} # hostname or IP of docker server
-    tryDockerInternalNetwork: {{ tsdproxy_docker_try_internal_network | bool | to_json }} # reach containers over shared container networks
-    defaultProxyProvider: default # name of which proxy provider to use
+  local:
+    host: {{ tsdproxy_docker_endpoint | to_json }}
+    targetHostname: {{ tsdproxy_docker_target_hostname | to_json }}
+    tryDockerInternalNetwork: {{ tsdproxy_docker_try_internal_network | bool | to_json }}
+    defaultProxyProvider: default
 lists: {{ tsdproxy_config_lists | to_json }}
 tailscale:
   providers:
-    default: # name of the provider
-      authKey: {{ tsdproxy_config_tailscale_providers_default_authkey | to_json }} # define AuthKey here
-      authKeyFile: {{ tsdproxy_config_tailscale_providers_default_authkeyfile | to_json }} # use this to load AuthKey from file. If this is defined, Authkey is ignored
-      clientId: {{ tsdproxy_config_tailscale_providers_default_clientid | to_json }} # OAuth client ID. If clientId and clientSecret are defined, authKey and authKeyFile are ignored
-      clientSecret: {{ tsdproxy_config_tailscale_providers_default_clientsecret | to_json }} # OAuth client secret
-      tags: {{ tsdproxy_config_tailscale_providers_default_tags | to_json }} # default tags for the nodes of this provider
-      controlUrl: {{ tsdproxy_config_tailscale_providers_default_controlurl | to_json }} # use this to override the default control URL
+    default:
+      authKey: {{ tsdproxy_config_tailscale_providers_default_authkey | to_json }}
+      authKeyFile: {{ tsdproxy_config_tailscale_providers_default_authkeyfile | to_json }}
+      clientId: {{ tsdproxy_config_tailscale_providers_default_clientid | to_json }}
+      clientSecret: {{ tsdproxy_config_tailscale_providers_default_clientsecret | to_json }}
+      tags: {{ tsdproxy_config_tailscale_providers_default_tags | to_json }}
+      controlUrl: {{ tsdproxy_config_tailscale_providers_default_controlurl | to_json }}
 
     {{ tsdproxy_config_tailscale_providers_additional_providers | indent(4) }}
   dataDir: /data/
@@ -34,6 +36,6 @@ http:
   hostname: 0.0.0.0
   port: {{ tsdproxy_container_http_port | int }}
 log:
-  level: {{ tsdproxy_config_log_level | to_json }} # set logging level: trace, debug, info, warn, error, fatal or panic
-  json: false # set to true to enable json logging
-proxyAccessLog: {{ tsdproxy_config_proxyaccesslog | bool | to_json }} # set to true to enable container access log
+  level: {{ tsdproxy_config_log_level | to_json }}
+  json: false
+proxyAccessLog: {{ tsdproxy_config_proxyaccesslog | bool | to_json }}
