@@ -55,9 +55,9 @@ tsdproxy_enabled: true
 You also need to set an authkey for Tailscale by adding the following configuration to your `vars.yml` file:
 
 ```yaml
-tsdproxy_config_tailscale_providers_default_authkey: '' # OR
+tsdproxy_config_tailscale_providers_default_authkey: "" # OR
 
-tsdproxy_config_tailscale_providers_default_authkeyfile: '' # use this to load authkey from file. If this is defined, tsdproxy_config_tailscale_providers_default_authkey is ignored
+tsdproxy_config_tailscale_providers_default_authkeyfile: "" # Load authkey from file. If this is defined, tsdproxy_config_tailscale_providers_default_authkey is ignored
 ```
 
 Alternatively, you can use an OAuth client by setting `tsdproxy_config_tailscale_providers_default_clientid` and `tsdproxy_config_tailscale_providers_default_clientsecret` (and usually `tsdproxy_config_tailscale_providers_default_tags`).
@@ -90,9 +90,9 @@ After running the command for installation, TSDProxy becomes available internall
 
 ### Adding a new service
 
-This proxy creates a separate Tailscale machine (node) in the Tailscale network for each service, without creating a sidecar container each time.
+This proxy creates for each service a own machine in the Tailscale network, without creating each time a sidecar container.
 
-To add a new service, you have to make sure that the service and proxy are in a same container network. You can do this by adding the proxy to the network of the service or the other way round.
+To add a new service, you have to make sure that the service and proxy are in a same container network. You can do this by adding the proxy to the network of the service:
 
 ```yaml
 tsdproxy_container_additional_networks_custom:
@@ -103,7 +103,7 @@ The next step is to add the service to the proxy. There are two ways of doing so
 
 #### Connecting a service to the proxy via container labels
 
-To connect a service with container labels, add the following items to the container (with a `SERVICE_container_labels_additional_labels_custom` variable for example):
+To connect a service with container labels, add the following items to the container (with a `SERVICE_container_labels_additional_labels_custom` variable for example, if other Ansible roles by the MASH are utilized):
 
 ```yaml
 - tsdproxy.enable=true
@@ -112,24 +112,64 @@ To connect a service with container labels, add the following items to the conta
 
 `tsdproxy.port.1` makes the service available via HTTPS on port 443 of its Tailscale machine and proxies to port 8080 of the container. Without it, TSDProxy uses the first port the container exposes.
 
-See the [official TSDProxy documentation](https://almeidapaulopt.github.io/tsdproxy/docs/providers/docker/) for further labels.
+The following labels are optional. Refer to the [official TSDProxy documentation](https://almeidapaulopt.github.io/tsdproxy/docs/providers/docker/) for more information, e.g. about options such as `tailscale_funnel` or `no_tlsvalidate`.
+
+```yaml
+- tsdproxy.name=my-service
+- tsdproxy.autodetect=false
+- tsdproxy.proxyprovider=providername
+- tsdproxy.ephemeral=false
+- tsdproxy.port.2=80/http->https://my-service.your-tailnet.ts.net
+```
 
 #### Connecting a service to the proxy via a Proxy list
 
-An alternative way to add a service to the proxy is to use Proxy lists. Define them with the `tsdproxy_config_lists` variable:
+An alternative way is to use proxy lists. Refer to the [official TSDProxy documentation](https://almeidapaulopt.github.io/tsdproxy/docs/providers/lists/) for details.
+
+First, You need to define the lists with the `tsdproxy_config_lists` variable by adding the following configuration to your `vars.yml` file (adapt to your needs):
 
 ```yaml
 tsdproxy_config_lists:
   critical:
     filename: /config/critical.yaml
     defaultProxyProvider: default
+    defaultProxyAccessLog: true
 ```
 
-and put the list file into the directory for configuration files (most likely `/mash/tsdproxy/config/`, mounted at `/config` in the container). It is possible to do so manually or by using [AUX-Files](auxiliary.md). The file has to exist before TSDProxy starts.
+Then, put the list file into the config folder (`tsdproxy_config_path`), which is mounted at `/config` in the container. This is possible manually or by using [AUX-Files](https://github.com/mother-of-all-self-hosting/mash-playbook/blob/main/docs/services/auxiliary.md). The list file has to exist before TSDProxy starts, or TSDProxy refuses to start. A list file looks like this:
 
-Please read the [official TSDProxy documentation](https://almeidapaulopt.github.io/tsdproxy/docs/providers/lists/) for the format of the list file.
+```yaml
+nas:
+  ports:
+    443/https:
+      targets:
+        - http://192.168.1.2:5000
+```
+
+Note that the role renders its own `tsdproxy.yaml` into that same folder, because that is the only path TSDProxy reads its configuration from. Do not edit that file by hand - it is overwritten on every run. Use the role's variables, or `tsdproxy_configuration_extension_yaml`, instead.
+
+### Access to the container socket
+
+TSDProxy discovers the services it should proxy by watching the container daemon, so it needs to be able to talk to it. By default the role bind-mounts `/var/run/docker.sock` into the container read-only. Point `tsdproxy_docker_endpoint` somewhere else to change that, and set `tsdproxy_docker_endpoint_is_unix_socket` to `false` if you are using a TCP endpoint (in which case nothing is mounted).
+
+**`tsdproxy_gid` has to be the group that owns the socket.** The container runs as `tsdproxy_uid:tsdproxy_gid`, and the socket is usually `root:docker` mode `0660`, so a `tsdproxy_gid` that is not the socket's group cannot open it.
+
+>[!NOTE]
+> If you would rather not hand a container the real socket, put something like [ansible-role-container-socket-proxy](https://github.com/mother-of-all-self-hosting/ansible-role-container-socket-proxy) in front of it and point `tsdproxy_docker_endpoint` at that instead.
+
+### The dashboard
+
+TSDProxy serves a dashboard and an API on `tsdproxy_container_http_port` (default `8080`) inside the container.
+
+Since TSDProxy v2.2.0 the dashboard and the API require authentication: a Tailscale identity, or an API key (`apiKey` / `apiKeyFile`, which you can set via `tsdproxy_configuration_extension_yaml`). Note, however, that **when TSDProxy runs in a container it always lets requests from loopback and private (RFC 1918) addresses in** (`adminAllowLocalhost`), with full admin rights. Any container that shares a network with TSDProxy, and anything that can reach the published port, can therefore use the dashboard and the API. Publish the port on a loopback address only, if at all.
 
 ## Troubleshooting
+
+### Upgrading from TSDProxy v1
+
+This role installs TSDProxy v2, whose configuration file format is incompatible with v1. The role takes care of the file it renders, but anything you add to it yourself has to follow the new format, and so do your services' labels and proxy lists.
+
+Refer to the [upstream upgrade guide](https://almeidapaulopt.github.io/tsdproxy/docs/upgrading/from-v1/) for the details.
 
 ### Check the service's logs
 
