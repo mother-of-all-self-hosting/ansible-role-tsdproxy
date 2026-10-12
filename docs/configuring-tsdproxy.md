@@ -184,3 +184,11 @@ Refer to the [upstream upgrade guide](https://almeidapaulopt.github.io/tsdproxy/
 ### Check the service's logs
 
 You can find the logs in [systemd-journald](https://www.freedesktop.org/software/systemd/man/systemd-journald.service.html) by logging in to the server with SSH and running `journalctl -fu tsdproxy` (or how you/your playbook named the service, e.g. `mash-tsdproxy`).
+
+#### Increase logging verbosity
+
+If you want to increase the verbosity, add the following configuration to your `vars.yml` file:
+
+```yaml
+tsdproxy_config_log_level: debug
+```
