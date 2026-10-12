@@ -69,6 +69,15 @@
           changed_when: false
           loop: "{{ tsdproxy_verify_units }}"
 
+        # ------------------------------------------------------------------
+        #
+        # ------------------------------------------------------------------
+
+        - name: Register tsdproxy.service
+          ansible.builtin.systemd_service:
+            name: tsdproxy.service
+          register: tsdproxy_service
+
         - name: Record the TSDProxy systemd invocation under test
           ansible.builtin.set_fact:
             tsdproxy_molecule_invocation_id: "{{ tsdproxy_service.status.InvocationID }}"
