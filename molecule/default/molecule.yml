@@ -73,7 +73,10 @@ provisioner:
         tsdproxy_molecule_authkey_container_path: /molecule-authkey
         tsdproxy_config_tailscale_providers_default_authkeyfile: "{{ tsdproxy_molecule_authkey_container_path }}"
         tsdproxy_container_additional_volumes:
-          - "type=bind,src={{ tsdproxy_molecule_authkey_host_path }},dst={{ tsdproxy_molecule_authkey_container_path }},ro"
+          - type: bind
+            src: "{{ tsdproxy_molecule_authkey_host_path }}"
+            dst: "{{ tsdproxy_molecule_authkey_container_path }}"
+            options: readonly
 
         # Exercises tsdproxy_configuration_extension_yaml, the documented way of
         # overriding parts of the rendered configuration. `log.json` is hardcoded
