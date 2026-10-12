@@ -56,17 +56,21 @@ tsdproxy_enabled: true
 ########################################################################
 ```
 
-### Set authkey for Tailscale
+### Configure authentication
 
-You also need to set an authkey for Tailscale by adding the following configuration to your `vars.yml` file:
+TSDProxy supports AuthKey and OAuth authentication methods with Tailscale.
+
+To authenticate with AuthKey, add the following configuration to your `vars.yml` file:
 
 ```yaml
-tsdproxy_config_tailscale_providers_default_authkey: "" # OR
+tsdproxy_config_tailscale_providers_default_authkey: YOUR_AUTHKEY_FOR_TAILSCALE_HERE
 
-tsdproxy_config_tailscale_providers_default_authkeyfile: "" # Load authkey from file. If this is defined, tsdproxy_config_tailscale_providers_default_authkey is ignored
+# AuthKey file can be specified instead
+# If this is defined, `tsdproxy_config_tailscale_providers_default_authkey` is ignored.
+tsdproxy_config_tailscale_providers_default_authkeyfile: YOUR_AUTHKEY_FILE_FOR_TAILSCALE_HERE
 ```
 
-Alternatively, you can use an OAuth client by setting `tsdproxy_config_tailscale_providers_default_clientid` and `tsdproxy_config_tailscale_providers_default_clientsecret` (and usually `tsdproxy_config_tailscale_providers_default_tags`).
+To authenticate with OAuth, you need to adjust `tsdproxy_config_tailscale_providers_default_*` variables.
 
 Refer to [this page](https://almeidapaulopt.github.io/tsdproxy/docs/advanced/tailscale/) on the official documentation for details.
 
