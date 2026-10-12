@@ -109,7 +109,7 @@ tsdproxy_container_additional_networks_custom:
   - YOUR-SERVICE-NETWORK
 ```
 
-The next step is to add the service to the proxy. There are two ways of doing so; one with container labels and the other with a Proxy list.
+The next step is to add the service to the proxy. There are two ways of doing so; one with container labels and the other with a proxy list.
 
 #### Connecting a service to the proxy via container labels
 
@@ -132,7 +132,7 @@ The following labels are optional. Refer to the [official TSDProxy documentation
 - tsdproxy.port.2=80/http->https://my-service.your-tailnet.ts.net
 ```
 
-#### Connecting a service to the proxy via a Proxy list
+#### Connecting a service to the proxy via a proxy list
 
 An alternative way is to use proxy lists. Refer to the [official TSDProxy documentation](https://almeidapaulopt.github.io/tsdproxy/docs/providers/lists/) for details.
 
