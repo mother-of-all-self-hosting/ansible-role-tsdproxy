@@ -284,11 +284,7 @@
 
         - name: Inspect the TSDProxy Molecule service container
           ansible.builtin.command:
-            argv:
-              - docker
-              - container
-              - inspect
-              - "{{ tsdproxy_molecule_service_container }}"
+            cmd: "docker container inspect {{ tsdproxy_molecule_service_container }}"
           register: tsdproxy_molecule_service_raw
           changed_when: false
 
@@ -381,11 +377,7 @@
 
         - name: Inspect the TSDProxy container
           ansible.builtin.command:
-            argv:
-              - docker
-              - container
-              - inspect
-              - tsdproxy
+            cmd: docker container inspect tsdproxy
           register: tsdproxy_container_raw
           changed_when: false
 

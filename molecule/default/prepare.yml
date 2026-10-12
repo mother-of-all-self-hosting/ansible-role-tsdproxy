@@ -76,11 +76,7 @@
     # and probing it there (tsdproxy_docker_try_internal_network).
     - name: Ensure the network of the TSDProxy Molecule service exists
       ansible.builtin.command:
-        argv:
-          - docker
-          - network
-          - create
-          - "{{ tsdproxy_molecule_service_network }}"
+        cmd: "docker network create {{ tsdproxy_molecule_service_network }}"
       register: tsdproxy_molecule_service_network_result
       changed_when: tsdproxy_molecule_service_network_result.rc == 0
       failed_when: >-
