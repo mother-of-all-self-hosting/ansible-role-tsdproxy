@@ -146,7 +146,7 @@ tsdproxy_config_lists:
     defaultProxyAccessLog: true
 ```
 
-Then, put the list file into the config folder (`tsdproxy_config_path`), which is mounted at `/config` in the container. This is possible manually or by using [AUX-Files](https://github.com/mother-of-all-self-hosting/mash-playbook/blob/main/docs/services/auxiliary.md). The list file has to exist before TSDProxy starts, or TSDProxy refuses to start. A list file looks like this:
+Then, put the list file into the config folder (`tsdproxy_config_path`), which is mounted at `/config` in the container. This is possible manually or by using [AUX-Files](https://github.com/mother-of-all-self-hosting/mash-playbook/blob/main/components/auxiliary/README.md). The list file has to exist before TSDProxy starts, or TSDProxy refuses to start. A list file looks like this:
 
 ```yaml
 nas:
