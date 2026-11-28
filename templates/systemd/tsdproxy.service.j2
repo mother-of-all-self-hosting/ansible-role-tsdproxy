@@ -45,9 +45,11 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
       --tmpfs=/tmp:rw,noexec,nosuid,size=100m \
       {{ tsdproxy_container_image }}
 
+{% if tsdproxy_container_network != 'host' %}
 {% for network in tsdproxy_container_additional_networks %}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} network connect {{ network }} {{ tsdproxy_identifier }}
 {% endfor %}
+{% endif %}
 
 ExecStart={{ devture_systemd_docker_base_host_command_docker }} start --attach {{ tsdproxy_identifier }}
 
